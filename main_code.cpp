@@ -1,13 +1,3 @@
-//clang++ server.cpp -o server -std=c++17 -I/opt/homebrew/include -L/opt/homebrew/lib -lzmq
-
-///PROJECT GOALS 
-//  socket messaging between two devices
-//  better login system (id, password, username etc.)
-//  better data management 
-//  user interface
-/////////////////////////////////////////
-
-
 #include <iostream>
 #include <cstdlib>
 #include <ctime>

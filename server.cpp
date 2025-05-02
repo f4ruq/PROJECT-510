@@ -1,4 +1,3 @@
-// === server.cpp ===
 #include <zmq.hpp>
 #include <iostream>
 #include <string>

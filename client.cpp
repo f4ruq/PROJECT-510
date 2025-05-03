@@ -3,8 +3,10 @@
 #include <string>
 #include <thread>
 #include <mutex>
+#include <atomic>
 
 std::mutex globalMutex;
+std::atomic<bool> exit_check{false};
 
 void user_input(std::string*& response_ptr)
 {
@@ -13,6 +15,11 @@ void user_input(std::string*& response_ptr)
         std::string response;
         //std::cout << "type your message: " << std::endl;
         std::getline(std::cin, response);
+        if(response == "exit")
+        {
+            exit_check = true;
+            break;
+        }
         {/////////////////--- MUTEX SCOPE ---////////////////////////////
             std::lock_guard<std::mutex> lock(globalMutex);
             *response_ptr = response;
@@ -22,8 +29,25 @@ void user_input(std::string*& response_ptr)
 
 void main_system_func(zmq::socket_t& socket_, zmq::context_t& context, std::string*& response_ptr)
 {
+    std::string first_message = "client is connected.";
+    zmq::message_t request(first_message.size());
+    memcpy(request.data(), first_message.data(), first_message.size());
+    socket_.send(request, zmq::send_flags::none);
+
     while(true)
     {
+        if(exit_check)
+        {
+            std::string exit_message = "client left the chat.";
+            zmq::message_t request(exit_message.size());
+            memcpy(request.data(), exit_message.data(), exit_message.size());
+            socket_.send(request, zmq::send_flags::none);
+            socket_.close();
+            context.shutdown();
+            context.close();
+            break;
+        }
+
         zmq::pollitem_t items[] = {
             { static_cast<void*>(socket_), 0, ZMQ_POLLIN, 0 }
         };
@@ -48,22 +72,6 @@ void main_system_func(zmq::socket_t& socket_, zmq::context_t& context, std::stri
             response_copy = *response_ptr;
             *response_ptr = "15710xdqwe";
         }/////////////////--- MUTEX SCOPE ---////////////////////////////
-
-        if(response_copy == "15710xdqwe")
-            continue;
-
-        if(response_copy == "exit")
-        {
-            std::string exit_message = "client konusmadan ayrildi.";
-            zmq::message_t request(exit_message.size());
-            memcpy(request.data(), exit_message.data(), exit_message.size());
-            socket_.send(request, zmq::send_flags::none);
-            socket_.close();
-            context.shutdown();
-            context.close();
-            break;
-        }
-
         zmq::message_t request(response_copy.size());
         memcpy(request.data(), response_copy.data(), response_copy.size());
         socket_.send(request, zmq::send_flags::none);

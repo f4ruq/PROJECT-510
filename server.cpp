@@ -3,9 +3,11 @@
 #include <string>
 #include <thread>
 #include <mutex>
+#include <atomic>
 
 std::mutex globalMutex;
 std::string client_id_str;
+std::atomic<bool> exit_check{false};
 
 void user_input(std::string*& response_ptr) 
 {
@@ -14,7 +16,11 @@ void user_input(std::string*& response_ptr)
         std::string response;
         //std::cout << "type your message: " << std::endl;
         std::getline(std::cin, response);
-        
+        if(response == "exit")
+        {
+            exit_check = true;
+            break;
+        }
         {/////////////////--- MUTEX SCOPE ---////////////////////////////
             std::lock_guard<std::mutex> lock(globalMutex);
             *response_ptr = response;
@@ -22,9 +28,24 @@ void user_input(std::string*& response_ptr)
     }
 }
 
-void main_system_func(zmq::message_t& request_, zmq::message_t& identity_, zmq::socket_t& socket_, std::string*& response_ptr) 
+void main_system_func(zmq::message_t& request_, zmq::message_t& identity_, zmq::socket_t& socket_, std::string*& response_ptr, zmq::context_t& context) 
 {
-    while (true) {
+    while (true) 
+    {
+        if(exit_check)
+        {
+            std::string exit_message = "server left the chat.";
+            zmq::message_t id_msg(client_id_str.begin(), client_id_str.end());
+            zmq::message_t reply(exit_message.size());
+            memcpy(reply.data(), exit_message.data(), exit_message.size());
+            socket_.send(id_msg, zmq::send_flags::sndmore);
+            socket_.send(reply, zmq::send_flags::none);
+            socket_.close();
+            context.shutdown();
+            context.close();
+            break;
+        }
+        
         zmq::pollitem_t items[] = {{static_cast<void*>(socket_), 0, ZMQ_POLLIN, 0}};
         zmq::poll(items, 1, 100);
 
@@ -55,6 +76,7 @@ void main_system_func(zmq::message_t& request_, zmq::message_t& identity_, zmq::
                 socket_.send(reply, zmq::send_flags::none);
                 *response_ptr = "15710xdqwe";
             }
+              
         }/////////////////--- MUTEX SCOPE ---////////////////////////////
     }
 }
@@ -123,14 +145,14 @@ int main() {
     zmq::socket_t socket(context, zmq::socket_type::router);
     socket.setsockopt(ZMQ_LINGER, 0);
     socket.bind("tcp://*:5555");
-
+    
     zmq::message_t identity;
     zmq::message_t request;
     std::string response = "15710xdqwe";
     std::string* response_ptr = &response;
 
     std::thread user_inputThread(user_input, std::ref(response_ptr));
-    std::thread main_system_funcThread(main_system_func, std::ref(request), std::ref(identity), std::ref(socket), std::ref(response_ptr));
+    std::thread main_system_funcThread(main_system_func, std::ref(request), std::ref(identity), std::ref(socket), std::ref(response_ptr), std::ref(context));
 
     user_inputThread.join();
     main_system_funcThread.join();

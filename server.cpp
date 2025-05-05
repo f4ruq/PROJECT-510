@@ -9,13 +9,19 @@ std::mutex globalMutex;
 std::string client_id_str;
 std::atomic<bool> exit_check{false};
 
+void clear_terminal(){std::cout << "\033[2J\033[H";}
+
+void clear_line(){std::cout << "\033[F\033[2K";}
+
 void user_input(std::string*& response_ptr) 
 {
     while (true)   
     {
         std::string response;
         //std::cout << "type your message: " << std::endl;
-        std::getline(std::cin, response);
+        std::getline(std::cin, response); clear_line();
+        std::cout << "you: " << response << std::endl;
+        
         if(response == "exit")
         {
             exit_check = true;

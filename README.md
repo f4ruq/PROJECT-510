@@ -1,4 +1,4 @@
-# Simple Messaging System (C++ & ZeroMQ)
+# Terminal Based Messaging System (C++ & ZeroMQ)
 
 This project is a simple messaging system built using C++ and ZeroMQ.  
 The main purpose is to improve my skills in multithreading, socket communication, and synchronization.
@@ -8,31 +8,29 @@ The main purpose is to improve my skills in multithreading, socket communication
 ## Project Status
 
 This project is still under development and may contain bugs or incomplete features.  
-Features such as account management, authentication, and structured message handling are currently being developed (see `main.cpp`).  
 Please note that this codebase is intended for educational and experimental purposes only.
+Client-server message communication via ZeroMQ sockets works fine. You can compile and run both.
 
----
-
-## Planned Features
-
-- A basic account system with name, password, ID, profession, age, balance, and debt
-- User registration and login features
-- Persistent data storage using file I/O
-- In-app money transfer between users
-- Client-server message communication via ZeroMQ sockets
-- Text-based terminal interface
-- Potential for future networked use beyond localhost
-
+This messaging system is configured to run over localhost by default (for now).
+To run the client and server across different machines or networks:
+	•	Make sure to replace localhost with the appropriate IP address in both client and server code.
+	•	Ensure that firewalls or network configurations allow the chosen port to be accessible.
+	•	You’ll need to configure port forwarding or use a VPN/tunneling solution depending on your environment.
+ 
 ---
 
 ## Turkish Explanation
 
-Bu proje, C++ ve ZeroMQ kullanılarak geliştirilmiş basit bir mesajlaşma sistemidir.  
-Amaç, çoklu iş parçacığı (multithreading), soket haberleşmesi ve eşzamanlılık (senkronizasyon) konularında kendimi geliştirmektir.
+Bu proje, C++ ve ZeroMQ kullanılarak geliştirilmiş basit bir mesajlaşma sistemidir. Proje hâlâ geliştirme aşamasındadır ve bazı hatalar veya tamamlanmamış özellikler içerebilir. Lütfen bu kod tabanının yalnızca eğitim ve deneysel amaçlarla hazırlandığını unutmayın.
 
-Geliştirme hedefleri, kullanıcı kayıt sistemi, giriş işlemleri, para transferi ve mesajlaşma altyapısının oluşturulması yönündedir.
+ZeroMQ soketleri üzerinden istemci-sunucu mesaj iletişimi düzgün şekilde çalışmaktadır.
+İstemci ve sunucu taraflarını derleyip çalıştırabilirsiniz.
 
-Proje henüz tamamlanmamıştır ve bazı bölümleri eksik veya hatalı olabilir.
+Bu mesajlaşma sistemi varsayılan olarak localhost üzerinde çalışacak şekilde yapılandırılmıştır (şimdilik).
+İstemci ve sunucuyu farklı cihazlar veya ağlar arasında çalıştırmak için:
+	•	Hem istemci hem de sunucu kodundaki localhost ifadesini uygun IP adresiyle değiştirin.
+	•	Seçilen portun erişilebilir olduğundan emin olmak için güvenlik duvarı ve ağ ayarlarını kontrol edin.
+	•	Ortamınıza bağlı olarak port yönlendirme, VPN veya tünelleme yöntemlerinden birini yapılandırmanız gerekebilir.
 
 ---
 
@@ -48,24 +46,6 @@ Proje henüz tamamlanmamıştır ve bazı bölümleri eksik veya hatalı olabili
 g++ -std=c++17 server.cpp -lzmq -o server
 g++ -std=c++17 client.cpp -lzmq -o client
 g++ -std=c++17 main.cpp -lzmq -o main
-```
-
-### Run
-
-In separate terminals:
-
-```bash
-./server
-```
-
-```bash
-./client
-```
-
-Or to run the standalone application:
-
-```bash
-./main
 ```
 
 ---

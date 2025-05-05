@@ -8,6 +8,8 @@
 std::mutex globalMutex;
 std::atomic<bool> exit_check{false};
 
+void clear_terminal(){std::cout << "\033[2J\033[H";}
+
 void user_input(std::string*& response_ptr)
 {
     while(true)

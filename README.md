@@ -13,9 +13,9 @@ Client-server message communication via ZeroMQ sockets works fine. You can compi
 
 This messaging system is configured to run over localhost by default (for now).
 To run the client and server across different machines or networks:
-	•	Make sure to replace localhost with the appropriate IP address in both client and server code.
-	•	Ensure that firewalls or network configurations allow the chosen port to be accessible.
-	•	You’ll need to configure port forwarding or use a VPN/tunneling solution depending on your environment.
+•	Make sure to replace localhost with the appropriate IP address in both client and server code.
+•	Ensure that firewalls or network configurations allow the chosen port to be accessible.
+•	You’ll need to configure port forwarding or use a VPN/tunneling solution depending on your environment.
  
 ---
 
@@ -28,9 +28,9 @@ ZeroMQ soketleri üzerinden istemci-sunucu mesaj iletişimi düzgün şekilde ç
 
 Bu mesajlaşma sistemi varsayılan olarak localhost üzerinde çalışacak şekilde yapılandırılmıştır (şimdilik).
 İstemci ve sunucuyu farklı cihazlar veya ağlar arasında çalıştırmak için:
-	•	Hem istemci hem de sunucu kodundaki localhost ifadesini uygun IP adresiyle değiştirin.
-	•	Seçilen portun erişilebilir olduğundan emin olmak için güvenlik duvarı ve ağ ayarlarını kontrol edin.
-	•	Ortamınıza bağlı olarak port yönlendirme, VPN veya tünelleme yöntemlerinden birini yapılandırmanız gerekebilir.
+•	Hem istemci hem de sunucu kodundaki localhost ifadesini uygun IP adresiyle değiştirin.
+•	Seçilen portun erişilebilir olduğundan emin olmak için güvenlik duvarı ve ağ ayarlarını kontrol edin.
+•	Ortamınıza bağlı olarak port yönlendirme, VPN veya tünelleme yöntemlerinden birini yapılandırmanız gerekebilir.
 
 ---
 

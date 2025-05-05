@@ -4,7 +4,9 @@
 #include <thread>
 #include <mutex>
 #include <atomic>
+#include <chrono>
 
+const std::string sentinel_code = "__::R7g!zPq$w9__";
 std::mutex globalMutex;
 std::string client_id_str;
 std::atomic<bool> exit_check{false};
@@ -13,12 +15,18 @@ void clear_terminal(){std::cout << "\033[2J\033[H";}
 
 void clear_line(){std::cout << "\033[F\033[2K";}
 
+// handles user input and updates the shared response pointer
 void user_input(std::string*& response_ptr) 
 {
+    {//mutex scope
+        std::lock_guard<std::mutex> lock(globalMutex);
+        std::string connect_message = "server is connected.";
+        *response_ptr = connect_message;
+    }//
+
     while (true)   
     {
         std::string response;
-        //std::cout << "type your message: " << std::endl;
         std::getline(std::cin, response); clear_line();
         std::cout << "you: " << response << std::endl;
         
@@ -27,13 +35,15 @@ void user_input(std::string*& response_ptr)
             exit_check = true;
             break;
         }
-        {/////////////////--- MUTEX SCOPE ---////////////////////////////
+
+        {//mutex scope
             std::lock_guard<std::mutex> lock(globalMutex);
             *response_ptr = response;
-        }/////////////////--- MUTEX SCOPE ---////////////////////////////
+        }//
     }
 }
 
+// main loop; receives messages, checks input, sends messages
 void main_system_func(zmq::message_t& request_, zmq::message_t& identity_, zmq::socket_t& socket_, std::string*& response_ptr, zmq::context_t& context) 
 {
     while (true) 
@@ -52,41 +62,44 @@ void main_system_func(zmq::message_t& request_, zmq::message_t& identity_, zmq::
             break;
         }
         
+        // poll the socket for new incoming data with a 100ms timeout
         zmq::pollitem_t items[] = {{static_cast<void*>(socket_), 0, ZMQ_POLLIN, 0}};
         zmq::poll(items, 1, 100);
 
         if (items[0].revents & ZMQ_POLLIN) 
         {
+            //router socket requires receiving the client identity first
             socket_.recv(identity_, zmq::recv_flags::none);
             socket_.recv(request_, zmq::recv_flags::none);
             client_id_str = identity_.to_string();
 
             std::string received_message = request_.to_string();
             
-            if (received_message != "15710xdqwe") 
+            if (received_message != sentinel_code) 
             {
-                std::cout << "Client mesaji: " << received_message << std::endl;
+                std::cout << "message from client: " << received_message << std::endl;
             }
         }
 
-        {/////////////////--- MUTEX SCOPE ---////////////////////////////
+        {//mutex scope
             std::lock_guard<std::mutex> lock(globalMutex);
             std::string response_ = *response_ptr;
 
-            if (response_ != "15710xdqwe" && !client_id_str.empty()) 
+            if (response_ != sentinel_code && !client_id_str.empty()) 
             {
                 zmq::message_t id_msg(client_id_str.begin(), client_id_str.end());
                 zmq::message_t reply(response_.size());
                 memcpy(reply.data(), response_.data(), response_.size());
                 socket_.send(id_msg, zmq::send_flags::sndmore);
                 socket_.send(reply, zmq::send_flags::none);
-                *response_ptr = "15710xdqwe";
+                *response_ptr = sentinel_code;
             }
               
-        }/////////////////--- MUTEX SCOPE ---////////////////////////////
+        }//
     }
 }
 
+//used for idle echoing/pinging if needed
 void idling(std::string &idle_code, zmq::socket_t &socket, zmq::message_t& identity, zmq::message_t& request_)
 {
     while(true)
@@ -108,21 +121,24 @@ void idling(std::string &idle_code, zmq::socket_t &socket, zmq::message_t& ident
     }
 }
 
+//optional function for manual send/receive use outside polling
 void send_message(std::string& response_, zmq::message_t& identity_, zmq::socket_t& socket_)
 {
-    while(true){
-        //std::cout<< "type your message: ";
+    while(true)
+    {
         std::getline(std::cin,response_);
         
-        if(response_ != "exit"){
+        if(response_ != "exit")
+        {
             zmq::message_t reply(response_.size());
             memcpy(reply.data(), response_.data(), response_.size());
             // send mesage
             socket_.send(identity_, zmq::send_flags::sndmore); // Önce istemcinin kimliğini gönder
             socket_.send(reply, zmq::send_flags::none); // Sonra mesajı gönder   
         } 
-        else{
-            std::string exit_message = "server konusmadan ayrildi.";
+        else
+        {
+            std::string exit_message = "server left the chat";
             zmq::message_t reply(exit_message.size());
             memcpy(reply.data(), exit_message.data(), exit_message.size());
             socket_.send(identity_, zmq::send_flags::sndmore); // Önce istemcinin kimliğini gönder
@@ -132,16 +148,17 @@ void send_message(std::string& response_, zmq::message_t& identity_, zmq::socket
     }
 }
 
+//optional function for receiving messages outside main thread
 void receive_message(zmq::message_t& request_, zmq::message_t& identity_, zmq::socket_t& socket_)
 {
-    while(true){    
+    while(true)
+    {    
         socket_.recv(identity_, zmq::recv_flags::none);
         zmq::recv_result_t result = socket_.recv(request_, zmq::recv_flags::none);
-            
         if(result)
         {
             std::string received_message = request_.to_string();
-            std::cout << "client mesaji: " << received_message << std::endl;
+            std::cout << "message from client: " << received_message << std::endl;
         }
     }
 }
@@ -154,7 +171,7 @@ int main() {
     
     zmq::message_t identity;
     zmq::message_t request;
-    std::string response = "15710xdqwe";
+    std::string response = sentinel_code;
     std::string* response_ptr = &response;
 
     std::thread user_inputThread(user_input, std::ref(response_ptr));

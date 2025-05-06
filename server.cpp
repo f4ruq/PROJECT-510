@@ -121,7 +121,7 @@ void idling(std::string &idle_code, zmq::socket_t &socket, zmq::message_t& ident
     }
 }
 
-//optional function for manual send/receive use outside polling
+//optional function for manual send
 void send_message(std::string& response_, zmq::message_t& identity_, zmq::socket_t& socket_)
 {
     while(true)

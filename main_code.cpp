@@ -273,62 +273,6 @@ void account()
     }
 }
 
-string server(string* ptr)
-{
-    zmq::context_t context(1); 
-    zmq::message_t identity; //client kimligi
-    zmq::socket_t socket(context, zmq::socket_type::router); 
-    socket.bind("tcp://*:5555"); 
-
-
-    while (true) 
-    { 
-        zmq::message_t identity; 
-        
-        zmq::recv_result_t id_result = socket.recv(identity, zmq::recv_flags::none);
-        if (!id_result) 
-        {
-            std::cerr << "hata: istemci kimliği alinamadi" << std::endl;
-            continue; 
-        }
-
-        zmq::message_t request;
-        
-        zmq::recv_result_t req_result = socket.recv(request, zmq::recv_flags::none);
-        if (!req_result) 
-        {
-            std::cerr << "hata: istemciden mesaj alinamadi" << std::endl;
-            continue; 
-        }
-        string clientString = request.to_string();
-        ptr = &clientString;
-        return *ptr;
-    
-        
-        if (stoi(clientString) == 1) {create_new_user();}
-        else if (stoi(clientString) == 0) {clearScreen(); break;}
-        else if (stoi(clientString) == 2) {login(); if (login_successful) { account(); } }
-        else if(stoi(clientString) == 3) {cout << "client pointer message: " << server(clientMessage_ptr) << endl;}
-        else if (stoi(clientString) == 4) {display_users_from_document();}
-        else {cout << "ur input is invalid." << endl;}
-        
-        //break;
-        //////////////////////////////////////////////////////////////////////////
-        
-        std::string reply;
-        std::cout << "mesaj gir: "; 
-        std::cin >> reply;
-        zmq::message_t response(reply.size());
-        memcpy(response.data(), reply.data(), reply.size());
-        
-    
-        socket.send(identity, zmq::send_flags::sndmore); 
-        socket.send(response, zmq::send_flags::none);    
-    ////////////////////////////////////////////////////////////////////////////////
-    }
-}
-
-
 int main() 
 {
     srand(time(NULL));

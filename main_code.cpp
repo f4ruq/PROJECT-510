@@ -49,7 +49,6 @@ std::mutex globalMutex;
 std::string client_id_str;
 std::atomic<bool> exit_check{false};
 std::vector<customer*> users;
-std::string choice;
 int current_user_index = -1;
 bool login_successful = false;
 
@@ -84,7 +83,7 @@ void user_input(std::string*& response_ptr)
     }
 }
 
-void main_server_func(zmq::message_t& request_, zmq::message_t& identity_, zmq::socket_t& socket_, std::string*& response_ptr, zmq::context_t& context) 
+void messaging_func(zmq::message_t& request_, zmq::message_t& identity_, zmq::socket_t& socket_, std::string*& response_ptr, zmq::context_t& context) 
 {
     while (true) 
     {
@@ -120,7 +119,7 @@ void main_server_func(zmq::message_t& request_, zmq::message_t& identity_, zmq::
                 std::cout << "message from client: " << received_message << std::endl;
             }
         }
-
+        /*
         {//mutex scope
             std::lock_guard<std::mutex> lock(globalMutex);
             std::string response_ = *response_ptr;
@@ -135,7 +134,7 @@ void main_server_func(zmq::message_t& request_, zmq::message_t& identity_, zmq::
                 *response_ptr = sentinel_code;
             }
               
-        }//
+        }//*/
     }
 }
 
@@ -361,6 +360,120 @@ void account()
     }
 }
 
+std::string client_instructions(zmq::message_t& request_, zmq::message_t& identity_, zmq::socket_t& socket_, std::string*& response_ptr, zmq::context_t& context)
+{
+    while (true) 
+    {
+        if(exit_check)
+        {
+            std::string exit_message = "Session terminated by the server";
+            zmq::message_t id_msg(client_id_str.begin(), client_id_str.end());
+            zmq::message_t reply(exit_message.size());
+            memcpy(reply.data(), exit_message.data(), exit_message.size());
+            socket_.send(id_msg, zmq::send_flags::sndmore);
+            socket_.send(reply, zmq::send_flags::none);
+            socket_.close();
+            context.shutdown();
+            context.close();
+            break;
+        }
+        
+        // poll the socket for new incoming data with a 100ms timeout
+        zmq::pollitem_t items[] = {{static_cast<void*>(socket_), 0, ZMQ_POLLIN, 0}};
+        zmq::poll(items, 1, 100);
+
+        if (items[0].revents & ZMQ_POLLIN) 
+        {
+            //router socket requires receiving the client identity first
+            socket_.recv(identity_, zmq::recv_flags::none);
+            socket_.recv(request_, zmq::recv_flags::none);
+            client_id_str = identity_.to_string();
+
+            std::string received_message = request_.to_string();
+            
+            if (received_message != sentinel_code) 
+            {
+                return received_message;
+            }
+            else 
+            {
+                return "";
+            }
+        }
+
+        {//mutex scope
+            std::lock_guard<std::mutex> lock(globalMutex);
+            std::string response_ = *response_ptr;
+
+            if (response_ != sentinel_code && !client_id_str.empty()) 
+            {
+                zmq::message_t id_msg(client_id_str.begin(), client_id_str.end());
+                zmq::message_t reply(response_.size());
+                memcpy(reply.data(), response_.data(), response_.size());
+                socket_.send(id_msg, zmq::send_flags::sndmore);
+                socket_.send(reply, zmq::send_flags::none);
+                *response_ptr = sentinel_code;
+            }
+              
+        }//
+    }
+}
+
+void main_menu(std::string*& response_ptr, zmq::message_t& request, zmq::message_t& identity, zmq::socket_t& socket, zmq::context_t& context , std::string& choice)
+{
+    while (true) 
+    {
+        std::cout << "welcome to our system. what do you want to do? (1) for register, (2) for login, (0) for quit (3)for network testing, 4 for display users from document: ";
+        //std::cin >> choice;
+        std::getline(std::cin, choice);
+        
+        if (choice == "1") {create_new_user();}
+        else if (choice == "0") {clearScreen(); break;}
+        else if (choice == "2") {login(); if (login_successful) { account(); } }
+        else if(choice == "3") 
+        {
+            std::thread user_inputThread(user_input, std::ref(response_ptr));
+            std::thread messaging_funcThread(messaging_func, std::ref(request), std::ref(identity), std::ref(socket), std::ref(response_ptr), std::ref(context));
+            user_inputThread.join();
+            messaging_funcThread.join();  
+        }
+        else if (choice == "4") {display_users_from_document();}
+        else {std::cout << "ur input is invalid." << std::endl;}
+    }
+}
+
+void remote_main_menu(std::string*& response_ptr, zmq::message_t& request, zmq::message_t& identity, zmq::socket_t& socket, zmq::context_t& context , std::string& choice)
+{
+    while (true) 
+    {
+        if(choice != sentinel_code)
+        {
+            if(choice == "client is connected.")
+            {
+                std::cout << "READY" << std::endl;
+            }
+            else
+            {
+                std::cout << "welcome to our system. what do you want to do? (1) for register, (2) for login, (0) for quit (3)for network testing, 4 for display users from document: ";
+                //std::cin >> choice;
+                //std::getline(std::cin, choice);
+                if (choice == "1") {create_new_user();}
+                else if (choice == "0") {clearScreen(); break;}
+                else if (choice == "2") {login(); if (login_successful) { account(); } }
+                else if(choice == "3") 
+                {
+                    std::thread user_inputThread(user_input, std::ref(response_ptr));
+                    std::thread messaging_funcThread(messaging_func, std::ref(request), std::ref(identity), std::ref(socket), std::ref(response_ptr), std::ref(context));
+                    user_inputThread.join();
+                    messaging_funcThread.join();  
+                }
+                else if (choice == "4") {display_users_from_document();}
+                //else {std::cout << "ur input is invalid." << std::endl;}
+            }
+        }
+    }
+}
+
 int main() 
 {
     srand(time(NULL));
@@ -375,26 +488,9 @@ int main()
     zmq::message_t request;
     std::string response = sentinel_code;
     std::string* response_ptr = &response;
+    std::string choice = client_instructions(request, identity, socket, response_ptr, context);
 
-    while (true) 
-    {
-        std::cout << "welcome to our system. what do you want to do? (1) for register, (2) for login, (0) for quit (3)for network testing, 4 for display users from document: ";
-        //std::cin >> choice;
-        std::getline(std::cin, choice);
-        
-        if (choice == "1") {create_new_user();}
-        else if (choice == "0") {clearScreen(); break;}
-        else if (choice == "2") {login(); if (login_successful) { account(); } }
-        else if(choice == "3") 
-        {
-            std::thread user_inputThread(user_input, std::ref(response_ptr));
-            std::thread main_server_funcThread(main_server_func, std::ref(request), std::ref(identity), std::ref(socket), std::ref(response_ptr), std::ref(context));
-            user_inputThread.join();
-            main_server_funcThread.join();  
-        }
-        else if (choice == "4") {display_users_from_document();}
-        else {std::cout << "ur input is invalid." << std::endl;}
-    }
+    remote_main_menu(response_ptr, request, identity, socket, context, choice);
     constructor_to_txt();
     for (int i = 0; i < users.size(); ++i) {delete users[i];}
     

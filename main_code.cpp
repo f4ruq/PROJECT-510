@@ -43,7 +43,6 @@ public:
     }
 };
 
-
 const std::string sentinel_code = "__::R7g!zPq$w9__";
 std::mutex globalMutex;
 std::string client_id_str;
@@ -83,7 +82,8 @@ void user_input(std::string*& response_ptr)
     }
 }
 
-void messaging_func(zmq::message_t& request_, zmq::message_t& identity_, zmq::socket_t& socket_, std::string*& response_ptr, zmq::context_t& context) 
+void messaging_func(zmq::message_t& request_, zmq::message_t& identity_, zmq::socket_t& socket_, 
+    std::string*& response_ptr, zmq::context_t& context) 
 {
     while (true) 
     {
@@ -119,7 +119,7 @@ void messaging_func(zmq::message_t& request_, zmq::message_t& identity_, zmq::so
                 std::cout << "message from client: " << received_message << std::endl;
             }
         }
-        /*
+        
         {//mutex scope
             std::lock_guard<std::mutex> lock(globalMutex);
             std::string response_ = *response_ptr;
@@ -134,7 +134,7 @@ void messaging_func(zmq::message_t& request_, zmq::message_t& identity_, zmq::so
                 *response_ptr = sentinel_code;
             }
               
-        }//*/
+        }
     }
 }
 
@@ -360,7 +360,32 @@ void account()
     }
 }
 
-std::string client_instructions(zmq::message_t& request_, zmq::message_t& identity_, zmq::socket_t& socket_, std::string*& response_ptr, zmq::context_t& context)
+void main_menu(std::string*& response_ptr, zmq::message_t& request, zmq::message_t& identity, 
+    zmq::socket_t& socket, zmq::context_t& context , std::string& choice)
+{
+    while (true) 
+    {
+        std::cout << "welcome to our system. what do you want to do? (1) for register, (2) for login, (0) for quit (3)for network testing, 4 for display users from document: ";
+        //std::cin >> choice;
+        std::getline(std::cin, choice);
+        
+        if (choice == "1") {create_new_user();}
+        else if (choice == "0") {clearScreen(); break;}
+        else if (choice == "2") {login(); if (login_successful) { account(); } }
+        else if(choice == "3") 
+        {
+            std::thread user_inputThread(user_input, std::ref(response_ptr));
+            std::thread messaging_funcThread(messaging_func, std::ref(request), std::ref(identity), std::ref(socket), std::ref(response_ptr), std::ref(context));
+            user_inputThread.join();
+            messaging_funcThread.join();  
+        }
+        else if (choice == "4") {display_users_from_document();}
+        else {std::cout << "ur input is invalid." << std::endl;}
+    }
+}
+
+void client_instructions(zmq::message_t& request_, zmq::message_t& identity_, zmq::socket_t& socket_, 
+    std::string*& response_ptr, zmq::context_t& context, std::string*& choice_ptr)
 {
     while (true) 
     {
@@ -393,15 +418,12 @@ std::string client_instructions(zmq::message_t& request_, zmq::message_t& identi
             
             if (received_message != sentinel_code) 
             {
-                return received_message;
-            }
-            else 
-            {
-                return "";
+                std::lock_guard<std::mutex> lock(globalMutex);
+                *choice_ptr = received_message;
             }
         }
 
-        {//mutex scope
+       /* {//mutex scope
             std::lock_guard<std::mutex> lock(globalMutex);
             std::string response_ = *response_ptr;
 
@@ -415,62 +437,51 @@ std::string client_instructions(zmq::message_t& request_, zmq::message_t& identi
                 *response_ptr = sentinel_code;
             }
               
-        }//
+        }//*/
     }
 }
 
-void main_menu(std::string*& response_ptr, zmq::message_t& request, zmq::message_t& identity, zmq::socket_t& socket, zmq::context_t& context , std::string& choice)
+void remote_main_menu(std::string*& response_ptr, zmq::message_t& request, zmq::message_t& identity,
+     zmq::socket_t& socket, zmq::context_t& context , std::string*& choice_ptr)
 {
     while (true) 
     {
-        std::cout << "welcome to our system. what do you want to do? (1) for register, (2) for login, (0) for quit (3)for network testing, 4 for display users from document: ";
-        //std::cin >> choice;
-        std::getline(std::cin, choice);
-        
-        if (choice == "1") {create_new_user();}
-        else if (choice == "0") {clearScreen(); break;}
-        else if (choice == "2") {login(); if (login_successful) { account(); } }
-        else if(choice == "3") 
-        {
-            std::thread user_inputThread(user_input, std::ref(response_ptr));
-            std::thread messaging_funcThread(messaging_func, std::ref(request), std::ref(identity), std::ref(socket), std::ref(response_ptr), std::ref(context));
-            user_inputThread.join();
-            messaging_funcThread.join();  
-        }
-        else if (choice == "4") {display_users_from_document();}
-        else {std::cout << "ur input is invalid." << std::endl;}
-    }
-}
-
-void remote_main_menu(std::string*& response_ptr, zmq::message_t& request, zmq::message_t& identity, zmq::socket_t& socket, zmq::context_t& context , std::string& choice)
-{
-    while (true) 
-    {
-        if(choice != sentinel_code)
-        {
-            if(choice == "client is connected.")
+        {//mutex scope
+            std::lock_guard<std::mutex> lock(globalMutex);
+            if(*choice_ptr != sentinel_code)
             {
-                std::cout << "READY" << std::endl;
-            }
-            else
-            {
-                std::cout << "welcome to our system. what do you want to do? (1) for register, (2) for login, (0) for quit (3)for network testing, 4 for display users from document: ";
-                //std::cin >> choice;
-                //std::getline(std::cin, choice);
-                if (choice == "1") {create_new_user();}
-                else if (choice == "0") {clearScreen(); break;}
-                else if (choice == "2") {login(); if (login_successful) { account(); } }
-                else if(choice == "3") 
+                if (*choice_ptr == "1") 
+                {
+                    create_new_user();
+                }
+                else if (*choice_ptr == "0") 
+                {
+                    clearScreen(); 
+                    exit_check = 1; 
+                    break;
+                }
+                else if (*choice_ptr == "2") 
+                {
+                    login(); 
+                    if (login_successful) 
+                    { 
+                        account(); 
+                    } 
+                }
+                else if(*choice_ptr == "3") 
                 {
                     std::thread user_inputThread(user_input, std::ref(response_ptr));
                     std::thread messaging_funcThread(messaging_func, std::ref(request), std::ref(identity), std::ref(socket), std::ref(response_ptr), std::ref(context));
                     user_inputThread.join();
                     messaging_funcThread.join();  
                 }
-                else if (choice == "4") {display_users_from_document();}
-                //else {std::cout << "ur input is invalid." << std::endl;}
-            }
-        }
+                else if (*choice_ptr== "4") 
+                {
+                    display_users_from_document();
+                }
+                *choice_ptr = sentinel_code;
+            }   
+        }//
     }
 }
 
@@ -488,10 +499,16 @@ int main()
     zmq::message_t request;
     std::string response = sentinel_code;
     std::string* response_ptr = &response;
-    std::string choice = client_instructions(request, identity, socket, response_ptr, context);
+    std::string choice;
+    std::string* choice_ptr = &choice;
 
-    remote_main_menu(response_ptr, request, identity, socket, context, choice);
-    constructor_to_txt();
+    std::thread client_instructionsThread(client_instructions, std::ref(request), std::ref(identity), std::ref(socket), std::ref(response_ptr), std::ref(context), std::ref(choice_ptr));
+    std::thread remote_main_menuThread(remote_main_menu, std::ref(response_ptr), std::ref(request), std::ref(identity), std::ref(socket), std::ref(context), std::ref(choice_ptr));
+    
+    client_instructionsThread.join();
+    remote_main_menuThread.join();
+    constructor_to_txt();        
+    
     for (int i = 0; i < users.size(); ++i) {delete users[i];}
     
     return 0;

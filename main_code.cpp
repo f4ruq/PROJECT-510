@@ -47,6 +47,7 @@ const std::string sentinel_code = "__::R7g!zPq$w9__";
 std::mutex globalMutex;
 std::string client_id_str;
 std::atomic<bool> exit_check{false};
+std::atomic<bool> remote_check{false};
 std::vector<customer*> users;
 int current_user_index = -1;
 bool login_successful = false;
@@ -156,11 +157,30 @@ void create_new_user()
     balance = 0;
     debt = 0;
     
-    clearScreen();
-    std::cout << "Please enter your name: "; std::cin >> name;
-    std::cout << "Please enter your profession: "; std::cin >> profession;
-    std::cout << "Please enter your password: "; std::cin >> password;
-    std::cout << "Please enter your age: "; std::cin >> age;
+    if(remote_check)
+    {
+        clearScreen();
+        std::cout << "Please enter your name: "; 
+        //std::cin >> name;
+        std::cout << "Please enter your profession: "; 
+        //std::cin >> profession;
+        std::cout << "Please enter your password: "; 
+        //std::cin >> password;
+        std::cout << "Please enter your age: "; 
+        //std::cin >> age;
+    }
+    else
+    {
+        clearScreen();
+        std::cout << "Please enter your name: "; 
+        std::cin >> name;
+        std::cout << "Please enter your profession: "; 
+        std::cin >> profession;
+        std::cout << "Please enter your password: "; 
+        std::cin >> password;
+        std::cout << "Please enter your age: "; 
+        std::cin >> age;
+    }
 
     customer* new_user = new customer(name, profession, password, id, balance, debt, age);
     users.push_back(new_user);

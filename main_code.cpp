@@ -148,7 +148,7 @@ void clearScreen()
 #endif
 }
 
-void create_new_user() 
+void create_new_user(std::string*& choice_ptr) 
 {
     std::string name, profession, password;
     int id, age;
@@ -160,13 +160,29 @@ void create_new_user()
     if(remote_check)
     {
         clearScreen();
-        std::cout << "Please enter your name: "; 
+        {
+            std::lock_guard<std::mutex> lock(globalMutex);
+            std::cout << "Please enter your name: "; 
+            name = *choice_ptr; 
+        }
         //std::cin >> name;
-        std::cout << "Please enter your profession: "; 
+        {
+            std::lock_guard<std::mutex> lock(globalMutex);
+            std::cout << "Please enter your profession: "; 
+            profession = *choice_ptr;
+        }
         //std::cin >> profession;
-        std::cout << "Please enter your password: "; 
+        {
+            std::lock_guard<std::mutex> lock(globalMutex);
+            std::cout << "Please enter your password: "; 
+            password = *choice_ptr;
+        }
         //std::cin >> password;
-        std::cout << "Please enter your age: "; 
+        {
+            std::lock_guard<std::mutex> lock(globalMutex);
+            std::cout << "Please enter your age: "; 
+            age = std::stoi(*choice_ptr);
+        }
         //std::cin >> age;
     }
     else
@@ -381,7 +397,7 @@ void account()
 }
 
 void main_menu(std::string*& response_ptr, zmq::message_t& request, zmq::message_t& identity, 
-    zmq::socket_t& socket, zmq::context_t& context , std::string& choice)
+    zmq::socket_t& socket, zmq::context_t& context , std::string& choice, std::string*& choice_ptr)
 {
     while (true) 
     {
@@ -389,7 +405,7 @@ void main_menu(std::string*& response_ptr, zmq::message_t& request, zmq::message
         //std::cin >> choice;
         std::getline(std::cin, choice);
         
-        if (choice == "1") {create_new_user();}
+        if (choice == "1") {create_new_user(choice_ptr);}
         else if (choice == "0") {clearScreen(); break;}
         else if (choice == "2") {login(); if (login_successful) { account(); } }
         else if(choice == "3") 
@@ -433,7 +449,7 @@ void client_instructions(zmq::message_t& request_, zmq::message_t& identity_, zm
             socket_.recv(identity_, zmq::recv_flags::none);
             socket_.recv(request_, zmq::recv_flags::none);
             client_id_str = identity_.to_string();
-
+            remote_check = true;
             std::string received_message = request_.to_string();
             
             if (received_message != sentinel_code) 
@@ -441,6 +457,10 @@ void client_instructions(zmq::message_t& request_, zmq::message_t& identity_, zm
                 std::lock_guard<std::mutex> lock(globalMutex);
                 *choice_ptr = received_message;
             }
+        }
+        else
+        {
+            remote_check = false;
         }
 
        /* {//mutex scope
@@ -472,7 +492,7 @@ void remote_main_menu(std::string*& response_ptr, zmq::message_t& request, zmq::
             {
                 if (*choice_ptr == "1") 
                 {
-                    create_new_user();
+                    create_new_user(choice_ptr);
                 }
                 else if (*choice_ptr == "0") 
                 {

@@ -55,9 +55,7 @@ Varsayılan olarak bu mesajlaşma sistemi `localhost` üzerinden çalışacak ş
 
 ---
 
-## Build Instructions / Derleme Talimatları
-
-### Requirements / Gereksinimler
+## Requirements / Gereksinimler
 
 - A C++17 compatible compiler  
 - ZeroMQ library (`libzmq`) and C++ bindings (`cppzmq`)  

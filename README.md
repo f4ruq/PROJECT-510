@@ -38,23 +38,10 @@ Bu mesajlaşma sistemi varsayılan olarak `localhost` üzerinde çalışacak şe
 
 ---
 
-## Build Instructions
+## License / Lisans
 
-### Requirements
-- A C++17 compatible compiler
-- ZeroMQ installed (`libzmq` and `cppzmq` headers)
-
-### Compile
-
-```bash
-g++ -std=c++17 server.cpp -lzmq -o server
-g++ -std=c++17 client.cpp -lzmq -o client
-g++ -std=c++17 main.cpp -lzmq -o main
-```
-
----
-
-## License
-
-This project is created for educational purposes and has no commercial intent.  
+This project is created for educational purposes and has no commercial intent.
 You are free to use, modify, and share it.
+
+Bu proje yalnızca eğitim amaçlı geliştirilmiştir ve ticari bir amacı yoktur.
+Dilediğiniz gibi kullanabilir, değiştirebilir ve paylaşabilirsiniz.

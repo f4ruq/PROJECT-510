@@ -1,4 +1,4 @@
-This project is a simple messaging system built using C++ and ZeroMQ.  
+This project is a messaging system built using C++ and ZeroMQ.  
 The main purpose is to improve my skills in multithreading, socket communication, and synchronization.
 
 Bu proje, C++ ve ZeroMQ kullanılarak geliştirilmiş basit bir mesajlaşma sistemidir.  

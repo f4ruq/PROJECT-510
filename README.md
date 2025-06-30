@@ -39,7 +39,7 @@ Varsayılan olarak bu mesajlaşma sistemi `localhost` üzerinden çalışacak ş
 
 - Graphical User Interface (GUI) added using Dear ImGui with SDL2 and OpenGL2  
 - Message history is displayed in real-time using scrollable windows  
-- Input/output is fully GUI-driven, terminal interaction not required  
+- Input/output is fully GUI-driven, terminal interaction not required anymore
 - Background threads handle all socket communication independently  
 - OpenGL2 backend ensures compatibility on macOS and legacy systems  
 - Both client and server now support GUI versions with identical logic to terminal version  
@@ -48,7 +48,7 @@ Varsayılan olarak bu mesajlaşma sistemi `localhost` üzerinden çalışacak ş
 
 - Dear ImGui kütüphanesi kullanılarak grafiksel kullanıcı arayüzü (GUI) eklendi  
 - Mesaj geçmişi anlık olarak kaydırılabilir pencereler içinde gösteriliyor  
-- Girdi/çıktı tamamen GUI üzerinden sağlanıyor, terminal kullanımı gerekmiyor  
+- Girdi/çıktı tamamen GUI üzerinden sağlanıyor, artık terminal kullanımı gerekmiyor  
 - Tüm soket haberleşmesi arka planda ayrı iş parçacıklarıyla gerçekleştiriliyor  
 - Uyumluluk amacıyla OpenGL2 backend kullanıldı (özellikle macOS için)  
 - Hem istemci hem sunucu tarafı, terminal sürümü ile aynı mantıkta GUI sürümleriyle destekleniyor

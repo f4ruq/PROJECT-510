@@ -5,7 +5,7 @@ Bu proje, C++ ve ZeroMQ kullanılarak geliştirilmiş bir mesajlaşma sistemidir
 Amacı, çoklu iş parçacığı, soket haberleşmesi ve senkronizasyon konularında becerilerimi geliştirmektir.
 
 
-![P-510 Messaging App Screenshot](assets/screenshot.jpg) 
+![P-510 Messaging App Screenshot](assets/screenshot.png) 
 ---
 
 ## Project Status / Proje Durumu

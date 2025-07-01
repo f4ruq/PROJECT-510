@@ -4,6 +4,8 @@ The main purpose is to improve my skills in multithreading, socket communication
 Bu proje, C++ ve ZeroMQ kullanılarak geliştirilmiş bir mesajlaşma sistemidir.  
 Amacı, çoklu iş parçacığı, soket haberleşmesi ve senkronizasyon konularında becerilerimi geliştirmektir.
 
+
+![P-510 Messaging App Screenshot](assets/screenshot.jpg) 
 ---
 
 ## Project Status / Proje Durumu

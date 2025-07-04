@@ -12,6 +12,7 @@
 #include "imgui_impl_opengl2.h"
 #include <vector>
 
+
 const std::string sentinel_code = "__::R7g!zPq$w9__";
 std::mutex globalMutex;
 std::atomic<bool> exit_check{false};
@@ -228,7 +229,7 @@ int main()
             {
                 //std::cout << user_input << std::endl;
                 std::lock_guard<std::mutex> lock(globalMutex);
-                std::string user_input_str(user_input);
+                std::string user_input_str(user_input); 
                 if(user_input_str == "exit")
                 {
                     running = 0;
@@ -239,7 +240,8 @@ int main()
                     SDL_DestroyWindow(window);
                     SDL_Quit();
                 }
-                response_ptr = &user_input_str;
+
+                *response_ptr = user_input_str;
                 
                 ImGui::SetKeyboardFocusHere(-1);
             }

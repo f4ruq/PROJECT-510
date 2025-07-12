@@ -17,6 +17,7 @@ const std::string sentinel_code = "__::R7g!zPq$w9__";
 std::mutex globalMutex;
 std::atomic<bool> exit_check{false};
 std::vector<std::string> message_log;
+std::atomic<bool> socket_active{0};
 
 void clear_terminal(){std::cout << "\033[2J\033[H";}
 
@@ -54,49 +55,53 @@ void main_zmq_func(zmq::socket_t& socket_, zmq::context_t& context, std::string*
 {
     while(true)
     {
-        if(exit_check)
+        while(socket_active)
         {
-            std::string exit_message = "client left the chat.";
-            zmq::message_t request(exit_message.size());
-            memcpy(request.data(), exit_message.data(), exit_message.size());
-            socket_.send(request, zmq::send_flags::none);
-            socket_.close();
-            context.shutdown();
-            context.close();
-            break;
-        }
-
-        // poll for incoming server messages
-        zmq::pollitem_t items[] = {
-            { static_cast<void*>(socket_), 0, ZMQ_POLLIN, 0 }
-        };
-
-        zmq::poll(&items[0], 1, std::chrono::milliseconds(100));
-
-        if(items[0].revents & ZMQ_POLLIN)
-        {
-            zmq::message_t reply;
-            socket_.recv(reply, zmq::recv_flags::none);
-            std::string received = reply.to_string();
-            
-            if(received != sentinel_code)
+            if(exit_check)
             {
-                message_log.push_back("server: " + received);
-                std::cout << "message from server: " << received << std::endl;
+                std::string exit_message = "client left the chat.";
+                zmq::message_t request(exit_message.size());
+                memcpy(request.data(), exit_message.data(), exit_message.size());
+                socket_.send(request, zmq::send_flags::none);
+                socket_.close();
+                context.shutdown();
+                context.close();
+                break;
             }
-        }
 
-        //send the latest user input to the server
-        std::string response_copy;
-        {//mutex scope
-            std::lock_guard<std::mutex> lock(globalMutex);
-            response_copy = *response_ptr;
-            *response_ptr = sentinel_code;
-        }//
-        zmq::message_t request(response_copy.size());
-        memcpy(request.data(), response_copy.data(), response_copy.size());
-        if(response_copy != sentinel_code){message_log.push_back("you: " + response_copy);}
-        socket_.send(request, zmq::send_flags::none);
+            // poll for incoming server messages
+            zmq::pollitem_t items[] = {
+                { static_cast<void*>(socket_), 0, ZMQ_POLLIN, 0 }
+            };
+
+            zmq::poll(&items[0], 1, std::chrono::milliseconds(100));
+
+            if(items[0].revents & ZMQ_POLLIN)
+            {
+                zmq::message_t reply;
+                socket_.recv(reply, zmq::recv_flags::none);
+                std::string received = reply.to_string();
+                
+                if(received != sentinel_code)
+                {
+                    std::lock_guard<std::mutex> lock(globalMutex);
+                    message_log.push_back("server: " + received);
+                    std::cout << "message from server: " << received << std::endl;
+                }
+            }
+
+            //send the latest user input to the server
+            std::string response_copy;
+            {//mutex scope
+                std::lock_guard<std::mutex> lock(globalMutex);
+                response_copy = *response_ptr;
+                *response_ptr = sentinel_code;
+            }//
+            zmq::message_t request(response_copy.size());
+            memcpy(request.data(), response_copy.data(), response_copy.size());
+            if(response_copy != sentinel_code){message_log.push_back("you: " + response_copy);}
+            socket_.send(request, zmq::send_flags::none);
+        }
     }
 }
 
@@ -171,7 +176,9 @@ int main()
     zmq::context_t context(1);
     zmq::socket_t socket(context, zmq::socket_type::dealer);
     socket.setsockopt(ZMQ_LINGER, 0);
-    socket.connect("tcp://localhost:5555");
+    //std::string sv_adress = "";
+    //socket.connect("tcp://localhost:5555");
+    //socket.connect("tcp://0.tcp.eu.ngrok.io:12121");
 
     std::string response = sentinel_code;
     std::string* response_ptr = &response;
@@ -206,7 +213,10 @@ int main()
     
     // main ui loop
     bool running = true;
-    while (running) {
+    int current_window = 0;
+
+    while (running) 
+    {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             ImGui_ImplSDL2_ProcessEvent(&event);
@@ -221,42 +231,79 @@ int main()
 
         
         char user_input[256] = "";
+        char adress_array[256] = "";
         static bool goster = false;
+        ImVec2 displaySize = io.DisplaySize;
+        float bottomHeight = displaySize.y * 0.8f;
+        float fullWidth = displaySize.x; 
+        ImGui::SetNextWindowPos(ImVec2(0, bottomHeight));
+        ImGui::SetNextWindowSize(ImVec2(fullWidth, bottomHeight));
 
-        ImGui::Begin("MAIN WINDOW");
-       
-            if(ImGui::Button("SEND") or ImGui::InputText("Mesaj", user_input, IM_ARRAYSIZE(user_input), ImGuiInputTextFlags_EnterReturnsTrue))
+        if(current_window == 0)
+        {
+            ImGui::Begin("ENTRY WINDOW");
+            if(ImGui::InputText("enter the adress", adress_array, IM_ARRAYSIZE(adress_array), ImGuiInputTextFlags_EnterReturnsTrue))
             {
-                //std::cout << user_input << std::endl;
-                std::lock_guard<std::mutex> lock(globalMutex);
-                std::string user_input_str(user_input); 
-                if(user_input_str == "exit")
+                std::string adress_input(adress_array);
+                socket.close();
+                socket = zmq::socket_t(context, zmq::socket_type::dealer);
+                try
                 {
-                    running = 0;
-                    ImGui_ImplOpenGL2_Shutdown();
-                    ImGui_ImplSDL2_Shutdown();
-                    ImGui::DestroyContext();
-                    SDL_GL_DeleteContext(gl_context);
-                    SDL_DestroyWindow(window);
-                    SDL_Quit();
+                    socket.connect(adress_input);
+                    socket_active = 1;
+                    current_window = 1;
+                }
+                catch(zmq::error_t err)
+                {
+                    std::cerr << err.what() << std::endl;
+                }  
+            }
+            ImGui::End();
+        }
+        else if(current_window == 1)
+        {
+            ImGui::Begin("...",nullptr,
+                ImGuiWindowFlags_NoMove |
+                ImGuiWindowFlags_NoResize |
+                ImGuiWindowFlags_NoCollapse);
+        
+                if(ImGui::InputText("Mesaj", user_input, IM_ARRAYSIZE(user_input), ImGuiInputTextFlags_EnterReturnsTrue) or ImGui::Button("SEND"))    
+                {
+                    //std::cout << user_input << std::endl;
+                    std::lock_guard<std::mutex> lock(globalMutex);
+                    std::string user_input_str(user_input); 
+                    if(user_input_str == "exit")
+                    {
+                        exit_check = 1;
+                        ImGui_ImplOpenGL2_Shutdown();
+                        ImGui_ImplSDL2_Shutdown();
+                        ImGui::DestroyContext();
+                        SDL_GL_DeleteContext(gl_context);
+                        SDL_DestroyWindow(window);
+                        SDL_Quit();
+                        running = 0;
+                    }
+
+                    *response_ptr = user_input_str;
+                    
+                    ImGui::SetKeyboardFocusHere(-1);
+                }
+            
+            ImGui::End();
+
+            ImGui::SetNextWindowPos(ImVec2(0, 0));
+            ImGui::SetNextWindowSize(ImVec2(fullWidth, bottomHeight));
+
+            ImGui::Begin("MESSAGES");
+        
+                for (int i = 0; i < message_log.size(); ++i)
+                {
+                    ImGui::Text("%s", message_log[i].c_str());
+                    ImGui::SetScrollHereY(1.0f);
                 }
 
-                *response_ptr = user_input_str;
-                
-                ImGui::SetKeyboardFocusHere(-1);
-            }
-        
-        ImGui::End();
-
-        ImGui::Begin("MESSAGES");
-    
-            for (int i = 0; i < message_log.size(); ++i)
-            {
-                ImGui::Text("%s", message_log[i].c_str());
-                ImGui::SetScrollHereY(1.0f);
-            }
-
-        ImGui::End();
+            ImGui::End();
+        }
         
         // rendering
         ImGui::Render();
@@ -268,6 +315,7 @@ int main()
     }
     
     //cleanup
+    exit_check = 1;
     ImGui_ImplOpenGL2_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();

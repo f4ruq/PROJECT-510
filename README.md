@@ -45,7 +45,7 @@ Varsayılan olarak bu mesajlaşma sistemi `localhost` üzerinden çalışacak ş
 - Background threads handle all socket communication independently  
 - OpenGL2 backend ensures compatibility on macOS and legacy systems  
 - Both client and server now support GUI versions with identical logic to terminal version
-- Server address entry screen added. You can now manually enter the server address you want to connect to.
+- Server address entry screen added. You can now manually enter the server address you want to connect to
 
 ---
 
@@ -55,6 +55,7 @@ Varsayılan olarak bu mesajlaşma sistemi `localhost` üzerinden çalışacak ş
 - Tüm soket haberleşmesi arka planda ayrı iş parçacıklarıyla gerçekleştiriliyor  
 - Uyumluluk amacıyla OpenGL2 backend kullanıldı (özellikle macOS için)  
 - Hem istemci hem sunucu tarafı, terminal sürümü ile aynı mantıkta GUI sürümleriyle destekleniyor
+- Sunucu adresi giriş ekranı eklendi. Artık bağlanmak istediğiniz server adresini manuel olarak girebilirsiniz
 
 ---
 

@@ -1,14 +1,3 @@
-/*
-clang++ client_ui.cpp \
-imgui/imgui*.cpp \
-imgui/backends/imgui_impl_sdl2.cpp imgui/backends/imgui_impl_opengl2.cpp \
--I/opt/homebrew/include -L/opt/homebrew/lib -lzmq -Iimgui -Iimgui/backends \
--I/opt/homebrew/include -I/opt/homebrew/include/SDL2 \
--L/opt/homebrew/lib \
--lSDL2 -framework OpenGL \
--std=c++17 -o imgui_blank
-*/
-
 #include <zmq.hpp>
 #include <iostream>
 #include <string>

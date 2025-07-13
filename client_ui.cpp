@@ -15,46 +15,17 @@
 
 const std::string sentinel_code = "__::R7g!zPq$w9__";
 std::mutex globalMutex;
-std::atomic<bool> exit_check{false};
-std::vector<std::string> message_log;
+std::atomic<bool> exit_check{0};
 std::atomic<bool> socket_active{0};
-
-void clear_terminal(){std::cout << "\033[2J\033[H";}
-
-void clear_line(){std::cout << "\033[F\033[2K";}
-
-// handles user input and updates the shared response pointer
-void user_input(std::string*& response_ptr) 
-{
-    {//mutex scope
-        std::lock_guard<std::mutex> lock(globalMutex);
-        std::string connect_message = "client is connected.";
-        *response_ptr = connect_message;
-    }//
-   
-    while (true)   
-    {
-        std::string response;
-        std::getline(std::cin, response); clear_line();
-        std::cout << "you: " << response << std::endl;
-        
-        if(response == "exit")
-        {
-            exit_check = true;
-            break;
-        }
-        {//mutex scope
-            std::lock_guard<std::mutex> lock(globalMutex);
-            *response_ptr = response;
-        }//
-    }
-}
+std::vector<std::string> message_log;
+bool thread_started = 0;
+std::string response = sentinel_code;
+std::string* response_ptr = &response;
+std::thread main_zmq_funcThread;
 
 // main loop; receives messages, checks input, sends messages
 void main_zmq_func(zmq::socket_t& socket_, zmq::context_t& context, std::string*& response_ptr)
 {
-    while(true)
-    {
         while(socket_active)
         {
             if(exit_check)
@@ -75,6 +46,7 @@ void main_zmq_func(zmq::socket_t& socket_, zmq::context_t& context, std::string*
             };
 
             zmq::poll(&items[0], 1, std::chrono::milliseconds(100));
+            if(exit_check){break;}
 
             if(items[0].revents & ZMQ_POLLIN)
             {
@@ -102,90 +74,18 @@ void main_zmq_func(zmq::socket_t& socket_, zmq::context_t& context, std::string*
             if(response_copy != sentinel_code){message_log.push_back("you: " + response_copy);}
             socket_.send(request, zmq::send_flags::none);
         }
-    }
+
 }
-
-//optional function for manual sending
-void send_message(std::string& response_, zmq::socket_t& socket_, zmq::context_t& context)
-{
-    while(true)
-    {
-        std::cout << "type your message: ";
-        std::getline(std::cin, response_);
-
-        if (response_ != "exit")
-        {
-            zmq::message_t request(response_.size());
-            memcpy(request.data(), response_.data(), response_.size());
-
-            socket_.send(request, zmq::send_flags::none);
-        }
-        else
-        {
-            std::string exit_message = "client left the chat.";
-            zmq::message_t request(exit_message.size());
-            memcpy(request.data(), exit_message.data(), exit_message.size());
-            socket_.send(request, zmq::send_flags::none);
-            socket_.close();
-            context.shutdown();
-            context.close();
-            break;
-        }
-    }     
-}
-
-//optional function for receiving messages outside main thread
-void receive_message(zmq::message_t& request_, zmq::socket_t& socket_)
-{   
-    while(true)
-    {     
-        zmq::recv_result_t result = socket_.recv(request_, zmq::recv_flags::none);
-            
-        if(result){
-            std::string received_message = request_.to_string();
-            std::cout << "message from server: " << received_message << std::endl;
-        }
-        else 
-        {
-            std::cout << "can't connect to server." << std::endl;
-        }
-    }
-}
-
-//used for idle echoing/pinging if needed
-void idling(std::string &idle_code, zmq::socket_t &socket, zmq::message_t& request_)
-{
-    while(true)
-    {
-        zmq::message_t idle(idle_code.size());
-        memcpy(idle.data(), idle_code.data(), idle_code.size());
-        socket.send(idle, zmq::send_flags::none);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-        zmq::recv_result_t result = socket.recv(request_, zmq::recv_flags::none);
-            
-        if(!result){
-            std::cout << "can't connect to server." << std::endl;
-        }
-    }
-}
-
 
 int main()
 {
     zmq::context_t context(1);
     zmq::socket_t socket(context, zmq::socket_type::dealer);
     socket.setsockopt(ZMQ_LINGER, 0);
-    //std::string sv_adress = "";
     //socket.connect("tcp://localhost:5555");
     //socket.connect("tcp://0.tcp.eu.ngrok.io:12121");
 
-    std::string response = sentinel_code;
-    std::string* response_ptr = &response;
-
-    std::thread main_zmq_funcThread(main_zmq_func, std::ref(socket), std::ref(context), std::ref(response_ptr));
-
-    // SDL init
+    // sdl init
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
         printf("SDL_Init Error: %s\n", SDL_GetError());
         return -1;
@@ -241,15 +141,21 @@ int main()
 
         if(current_window == 0)
         {
+            socket_active = 0;
+            exit_check = 1;
+            if(main_zmq_funcThread.joinable()){main_zmq_funcThread.join();}
+            socket.close();
             ImGui::Begin("ENTRY WINDOW");
             if(ImGui::InputText("enter the adress", adress_array, IM_ARRAYSIZE(adress_array), ImGuiInputTextFlags_EnterReturnsTrue))
             {
                 std::string adress_input(adress_array);
-                socket.close();
+                
                 socket = zmq::socket_t(context, zmq::socket_type::dealer);
                 try
                 {
                     socket.connect(adress_input);
+                    main_zmq_funcThread = std::thread(main_zmq_func, std::ref(socket), std::ref(context), std::ref(response_ptr));
+                    exit_check = 0;
                     socket_active = 1;
                     current_window = 1;
                 }
@@ -266,33 +172,22 @@ int main()
                 ImGuiWindowFlags_NoMove |
                 ImGuiWindowFlags_NoResize |
                 ImGuiWindowFlags_NoCollapse);
-        
+                if(ImGui::Button("SET ADRESS")){current_window = 0;}
                 if(ImGui::InputText("Mesaj", user_input, IM_ARRAYSIZE(user_input), ImGuiInputTextFlags_EnterReturnsTrue) or ImGui::Button("SEND"))    
                 {
                     //std::cout << user_input << std::endl;
                     std::lock_guard<std::mutex> lock(globalMutex);
                     std::string user_input_str(user_input); 
-                    if(user_input_str == "exit")
-                    {
-                        exit_check = 1;
-                        ImGui_ImplOpenGL2_Shutdown();
-                        ImGui_ImplSDL2_Shutdown();
-                        ImGui::DestroyContext();
-                        SDL_GL_DeleteContext(gl_context);
-                        SDL_DestroyWindow(window);
-                        SDL_Quit();
-                        running = 0;
-                    }
-
                     *response_ptr = user_input_str;
-                    
                     ImGui::SetKeyboardFocusHere(-1);
+                    
                 }
-            
+                    
             ImGui::End();
-
+            
             ImGui::SetNextWindowPos(ImVec2(0, 0));
             ImGui::SetNextWindowSize(ImVec2(fullWidth, bottomHeight));
+            
 
             ImGui::Begin("MESSAGES");
         
@@ -310,12 +205,15 @@ int main()
         glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-        ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+        ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData()); 
         SDL_GL_SwapWindow(window);
     }
     
     //cleanup
+    
+    socket_active = 0;
     exit_check = 1;
+    //socket.close();
     ImGui_ImplOpenGL2_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
@@ -323,7 +221,7 @@ int main()
     SDL_DestroyWindow(window);
     SDL_Quit();
     
-    main_zmq_funcThread.join();
+    if(main_zmq_funcThread.joinable()){main_zmq_funcThread.join();}
 
     return 0;
 }

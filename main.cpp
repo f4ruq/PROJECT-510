@@ -24,7 +24,6 @@ std::atomic<bool> server_socket_active{0};
 std::atomic<bool> client_socket_active{0};
 std::string client_id_str;
 std::vector<std::string> message_log;
-bool thread_started = 0;
 std::string response = sentinel_code;
 std::string* response_ptr = &response;
 std::thread zmq_client_funcThread;
@@ -109,7 +108,7 @@ void zmq_server_func(zmq::message_t& request_, zmq::message_t& identity_, zmq::s
             // poll the socket for new incoming data with a 100ms timeout
             zmq::pollitem_t items[] = {{static_cast<void*>(socket_), 0, ZMQ_POLLIN, 0}};
             zmq::poll(items, 1, 100);
-
+            if(server_exit_check){break;}
             if (items[0].revents & ZMQ_POLLIN) 
             {
                 //router socket requires receiving the client identity first
@@ -156,7 +155,9 @@ int main()
     zmq::message_t identity;
     zmq::message_t request;
     std::string* received_message_ptr;
-
+    bool running = true;
+    int current_window = 0;
+    
         // sdl init
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
         printf("SDL_Init Error: %s\n", SDL_GetError());
@@ -174,17 +175,21 @@ int main()
 
     // imgui context
     IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
+    ImGui::CreateContext(); 
     ImGuiIO& io = ImGui::GetIO(); (void)io;
 
     ImGui::StyleColorsDark();
-
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.WindowBorderSize = 0.0f;
+    style.FrameRounding = 6.0f;   
+    style.PopupRounding = 8.0f;  
+    style.ChildRounding = 10.0f;  
+    style.GrabRounding = 4.0f;   
+    
     // backend init
     ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
     ImGui_ImplOpenGL2_Init();
 
-    bool running = true;
-    int current_window = 0;
 
     while (running) 
     {
@@ -207,24 +212,43 @@ int main()
         static std::string user_input_stc;
         ImVec2 displaySize = io.DisplaySize;
         float bottomHeight = displaySize.y * 0.8f;
+        float halfHeight = displaySize.y * 0.5f;
+        float fullHeight = displaySize.y;
         float fullWidth = displaySize.x; 
-        ImGui::SetNextWindowPos(ImVec2(0, bottomHeight));
-        ImGui::SetNextWindowSize(ImVec2(fullWidth, bottomHeight));
-
+        float halfWidth = displaySize.x * 0.5f;
+        
         if(current_window == switch)
         {
-            ImGui::Begin("ENTRY WINDOW");
-                if(ImGui::Button("SERVER"))
+            client_exit_check = 1;
+            client_socket_active = 1;
+            if(zmq_client_funcThread.joinable()){zmq_client_funcThread.join();}
+            
+            server_exit_check = 1;
+            server_socket_active = 0;
+            if(zmq_server_funcThread.joinable()){zmq_server_funcThread.join();}
+            
+            ImGui::SetNextWindowPos(ImVec2(displaySize.x * 0.25f, displaySize.y * 0.25f));
+            ImGui::SetNextWindowSize(ImVec2(halfWidth, halfHeight));
+            ImGui::Begin("enter adress", nullptr, ImGuiWindowFlags_NoTitleBar |
+                ImGuiWindowFlags_NoMove |
+                ImGuiWindowFlags_NoResize |
+                ImGuiWindowFlags_NoCollapse);
+                ImVec2 window_size = ImGui::GetWindowSize();
+                float window_height = window_size.y;
+                float window_width = window_size.x;
+                
+                ImGui::SetCursorPos(ImVec2(window_width * 0.5f, window_height * 0.25f));
+                if(ImGui::Button("SERVER", ImVec2(window_width * 0.5f -5, window_height * 0.5f)))
                 {
                     try
                     {
+                        server_exit_check = 1;
+                        server_socket_active = 0;
+                        if(zmq_server_funcThread.joinable()){zmq_server_funcThread.join();}
                         client_exit_check = 1;
                         client_socket_active = 1;
                         if(zmq_client_funcThread.joinable()){zmq_client_funcThread.join();}
                         
-                        server_exit_check = 1;
-                        server_socket_active = 0;
-                        if(zmq_server_funcThread.joinable()){zmq_server_funcThread.join();}
                         
                         socket.close();
                         socket = zmq::socket_t(context, zmq::socket_type::router);
@@ -240,7 +264,9 @@ int main()
                         std::cerr << err.what() << std::endl;
                     }
                 }
-                if(ImGui::Button("CLIENT")){current_window = enter_adress;}
+                
+                ImGui::SetCursorPos(ImVec2(0, window_height * 0.25f));
+                if(ImGui::Button("CLIENT", ImVec2(window_width * 0.5f -5, window_height * 0.5f))){current_window = enter_adress;}
             ImGui::End();
         }
         else if(current_window == enter_adress)
@@ -258,7 +284,13 @@ int main()
             }
             catch(zmq::error_t err){std::cerr << err.what() << std::endl;}
             
-            ImGui::Begin("ENTRY WINDOW");
+            ImGui::SetNextWindowPos(ImVec2(displaySize.x * 0.25f, displaySize.y * 0.25f));
+            ImGui::SetNextWindowSize(ImVec2(halfWidth, halfHeight));
+            ImGui::Begin("ADRESS", nullptr, ImGuiWindowFlags_NoTitleBar |
+                ImGuiWindowFlags_NoMove |
+                ImGuiWindowFlags_NoResize |
+                ImGuiWindowFlags_NoCollapse);
+            if(ImGui::Button("GO BACK")){current_window = switch;}
             if(ImGui::InputText("enter the adress", adress_array, IM_ARRAYSIZE(adress_array), ImGuiInputTextFlags_EnterReturnsTrue))
             {
                 std::string adress_input(adress_array);
@@ -281,11 +313,13 @@ int main()
         }
         else if(current_window == client)
         {
-            ImGui::Begin("...",nullptr,
+            ImGui::SetNextWindowPos(ImVec2(0, bottomHeight));
+            ImGui::SetNextWindowSize(ImVec2(fullWidth, bottomHeight));
+            ImGui::Begin("...",nullptr, ImGuiWindowFlags_NoTitleBar |
                 ImGuiWindowFlags_NoMove |
                 ImGuiWindowFlags_NoResize |
                 ImGuiWindowFlags_NoCollapse);
-                if(ImGui::Button("SET ADRESS")){current_window = 0;}
+                if(ImGui::Button("GO BACK")){current_window = enter_adress;}
                 if(ImGui::InputText("Mesaj", user_input, IM_ARRAYSIZE(user_input), ImGuiInputTextFlags_EnterReturnsTrue) or ImGui::Button("SEND"))    
                 {
                     //std::cout << user_input << std::endl;
@@ -302,7 +336,7 @@ int main()
             ImGui::SetNextWindowSize(ImVec2(fullWidth, bottomHeight));
             
 
-            ImGui::Begin("MESSAGES");
+            ImGui::Begin("MESSAGES", nullptr, ImGuiWindowFlags_NoTitleBar);
         
                 for (int i = 0; i < message_log.size(); ++i)
                 {
@@ -314,7 +348,9 @@ int main()
         }
         else if(current_window == server)
         {
-            ImGui::Begin("...",nullptr,
+            ImGui::SetNextWindowPos(ImVec2(0, bottomHeight));
+            ImGui::SetNextWindowSize(ImVec2(fullWidth, bottomHeight));
+            ImGui::Begin("...",nullptr, ImGuiWindowFlags_NoTitleBar |
                 ImGuiWindowFlags_NoMove |
                 ImGuiWindowFlags_NoResize |
                 ImGuiWindowFlags_NoCollapse);
@@ -346,7 +382,7 @@ int main()
             ImGui::SetNextWindowPos(ImVec2(0, 0));
             ImGui::SetNextWindowSize(ImVec2(fullWidth, bottomHeight));
             
-            ImGui::Begin("MESSAGES");
+            ImGui::Begin("MESSAGES", nullptr, ImGuiWindowFlags_NoTitleBar);
                 
                 for (int i = 0; i < message_log.size(); ++i)
                 {

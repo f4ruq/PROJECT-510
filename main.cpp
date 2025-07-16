@@ -180,12 +180,13 @@ int main()
 
     ImGui::StyleColorsDark();
     ImGuiStyle& style = ImGui::GetStyle();
+    io.Fonts->AddFontFromFileTTF("assets/Inter_28pt-Regular.ttf", 18.0f);
     style.WindowBorderSize = 0.0f;
     style.FrameRounding = 6.0f;   
     style.PopupRounding = 8.0f;  
     style.ChildRounding = 10.0f;  
     style.GrabRounding = 4.0f;   
-    
+
     // backend init
     ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
     ImGui_ImplOpenGL2_Init();
@@ -227,18 +228,18 @@ int main()
             server_socket_active = 0;
             if(zmq_server_funcThread.joinable()){zmq_server_funcThread.join();}
             
-            ImGui::SetNextWindowPos(ImVec2(displaySize.x * 0.25f, displaySize.y * 0.25f));
-            ImGui::SetNextWindowSize(ImVec2(halfWidth, halfHeight));
-            ImGui::Begin("enter adress", nullptr, ImGuiWindowFlags_NoTitleBar |
+            ImGui::SetNextWindowPos(ImVec2(0, 0));
+            ImGui::SetNextWindowSize(ImVec2(displaySize.x, displaySize.y));
+            ImGui::Begin("switch", nullptr, ImGuiWindowFlags_NoTitleBar |
                 ImGuiWindowFlags_NoMove |
                 ImGuiWindowFlags_NoResize |
                 ImGuiWindowFlags_NoCollapse);
                 ImVec2 window_size = ImGui::GetWindowSize();
                 float window_height = window_size.y;
                 float window_width = window_size.x;
-                
-                ImGui::SetCursorPos(ImVec2(window_width * 0.5f, window_height * 0.25f));
-                if(ImGui::Button("SERVER", ImVec2(window_width * 0.5f -5, window_height * 0.5f)))
+                ImGui::Text("test");
+                ImGui::SetCursorPos(ImVec2(window_width * 0.5f, window_height * 0.25f + 100));
+                if(ImGui::Button("SERVER", ImVec2(window_width * 0.25f -5, window_height * 0.25f)))
                 {
                     try
                     {
@@ -264,9 +265,9 @@ int main()
                         std::cerr << err.what() << std::endl;
                     }
                 }
-                
-                ImGui::SetCursorPos(ImVec2(0, window_height * 0.25f));
-                if(ImGui::Button("CLIENT", ImVec2(window_width * 0.5f -5, window_height * 0.5f))){current_window = enter_adress;}
+
+                ImGui::SetCursorPos(ImVec2(window_width * 0.25f, window_height * 0.25f + 100));
+                if(ImGui::Button("CLIENT", ImVec2(window_width * 0.25f -5, window_height * 0.25f))){current_window = enter_adress;}
             ImGui::End();
         }
         else if(current_window == enter_adress)

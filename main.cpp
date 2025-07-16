@@ -180,17 +180,21 @@ int main()
 
     ImGui::StyleColorsDark();
     ImGuiStyle& style = ImGui::GetStyle();
-    io.Fonts->AddFontFromFileTTF("assets/Inter_28pt-Regular.ttf", 18.0f);
+    
     style.WindowBorderSize = 0.0f;
     style.FrameRounding = 6.0f;   
     style.PopupRounding = 8.0f;  
     style.ChildRounding = 10.0f;  
     style.GrabRounding = 4.0f;   
-
+    ImFont* default_font = io.Fonts->AddFontFromFileTTF("assets/Inter_28pt-Regular.ttf", 18.0f);
+    //ImFont* big_font = io.Fonts->AddFontFromFileTTF("assets/Roboto_Condensed-Regular.ttf", 100.0f);
+    io.FontDefault = default_font;
     // backend init
     ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
     ImGui_ImplOpenGL2_Init();
 
+    
+    
 
     while (running) 
     {
@@ -216,7 +220,7 @@ int main()
         float halfHeight = displaySize.y * 0.5f;
         float fullHeight = displaySize.y;
         float fullWidth = displaySize.x; 
-        float halfWidth = displaySize.x * 0.5f;
+        float halfWidth = displaySize.x * 0.5f;        
         
         if(current_window == switch)
         {
@@ -228,18 +232,34 @@ int main()
             server_socket_active = 0;
             if(zmq_server_funcThread.joinable()){zmq_server_funcThread.join();}
             
-            ImGui::SetNextWindowPos(ImVec2(0, 0));
-            ImGui::SetNextWindowSize(ImVec2(displaySize.x, displaySize.y));
-            ImGui::Begin("switch", nullptr, ImGuiWindowFlags_NoTitleBar |
+                ImGui::SetNextWindowPos(ImVec2(0, 0));
+                ImGui::SetNextWindowSize(ImVec2(displaySize.x , displaySize.y * 0.40f));
+                
+                ImGui::Begin("text window", nullptr, ImGuiWindowFlags_NoTitleBar |
                 ImGuiWindowFlags_NoMove |
                 ImGuiWindowFlags_NoResize |
                 ImGuiWindowFlags_NoCollapse);
                 ImVec2 window_size = ImGui::GetWindowSize();
                 float window_height = window_size.y;
                 float window_width = window_size.x;
-                ImGui::Text("test");
-                ImGui::SetCursorPos(ImVec2(window_width * 0.5f, window_height * 0.25f + 100));
-                if(ImGui::Button("SERVER", ImVec2(window_width * 0.25f -5, window_height * 0.25f)))
+                
+                ImGui::SetWindowFontScale(2.5f);
+                ImGui::SetCursorPos(ImVec2(window_width * 0.25f +20, window_height * 0.5f));
+                ImGui::Text("Choose an Application");
+                ImGui::End();
+            
+            
+            ImGui::SetNextWindowPos(ImVec2(0, displaySize.y * 0.40f));
+            ImGui::SetNextWindowSize(ImVec2(displaySize.x, displaySize.y * 0.75f));
+            
+            ImGui::Begin("switch", nullptr, ImGuiWindowFlags_NoTitleBar |
+                ImGuiWindowFlags_NoMove |
+                //ImGuiWindowFlags_NoResize |
+                ImGuiWindowFlags_NoCollapse);
+                
+                ImGui::SetCursorPos(ImVec2(window_width * 0.5f + 5 , 0));
+                
+                if(ImGui::Button("Server", ImVec2(window_width * 0.25f, 175)))
                 {
                     try
                     {
@@ -266,8 +286,8 @@ int main()
                     }
                 }
 
-                ImGui::SetCursorPos(ImVec2(window_width * 0.25f, window_height * 0.25f + 100));
-                if(ImGui::Button("CLIENT", ImVec2(window_width * 0.25f -5, window_height * 0.25f))){current_window = enter_adress;}
+                ImGui::SetCursorPos(ImVec2(window_width * 0.25f,0));
+                if(ImGui::Button("Client", ImVec2(window_width * 0.25f - 5, 175))){current_window = enter_adress;}
             ImGui::End();
         }
         else if(current_window == enter_adress)

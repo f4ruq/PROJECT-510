@@ -6,6 +6,7 @@ Amacı, çoklu iş parçacığı, soket haberleşmesi ve senkronizasyon konular�
 
 
 ![P-510 Messaging App Screenshot](assets/screenshot.png) 
+![P-510 Messaging App Screenshot1](assets/screenshot1.png)
 ---
 
 ## Project Status / Proje Durumu

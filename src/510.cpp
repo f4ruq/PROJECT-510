@@ -7,6 +7,10 @@ std::atomic<bool> server_socket_active{0};
 std::atomic<bool> client_socket_active{0};
 std::string client_id_str;
 std::vector<std::string> message_log;
+std::string response = sentinel_code;
+std::string* response_ptr = &response;
+std::thread zmq_client_funcThread;
+std::thread zmq_server_funcThread;
 
 void zmq_client_func(zmq::socket_t& socket_, zmq::context_t& context, std::string*& response_ptr)
 {

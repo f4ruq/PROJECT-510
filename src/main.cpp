@@ -1,26 +1,8 @@
-#include <zmq.hpp>
-#include <iostream>
-#include <string>
-#include <thread>
-#include <mutex>
-#include <atomic>
-#include <chrono>
-#include <SDL.h>
-#include <SDL_opengl.h>
-#include "imgui.h"
-#include "imgui_impl_sdl2.h"
-#include "imgui_impl_opengl2.h"
-#include <vector>
 #include "510.hpp"
 #define switch 0
 #define client 1
 #define enter_adress 2
 #define server 3
-
-std::string response = sentinel_code;
-std::string* response_ptr = &response;
-std::thread zmq_client_funcThread;
-std::thread zmq_server_funcThread;
 
 int main()
 {
@@ -67,9 +49,6 @@ int main()
     // backend init
     ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
     ImGui_ImplOpenGL2_Init();
-
-    
-    
 
     while (running) 
     {

@@ -22,6 +22,10 @@ extern std::atomic<bool> server_socket_active;
 extern std::atomic<bool> client_socket_active;
 extern std::string client_id_str;
 extern std::vector<std::string> message_log;
+extern std::string response;
+extern std::string* response_ptr;
+extern std::thread zmq_client_funcThread;
+extern std::thread zmq_server_funcThread;
 
 void zmq_client_func(zmq::socket_t& socket_, zmq::context_t& context, std::string*& response_ptr);
 

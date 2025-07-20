@@ -11,6 +11,18 @@ std::string response = sentinel_code;
 std::string* response_ptr = &response;
 std::thread zmq_client_funcThread;
 std::thread zmq_server_funcThread;
+zmq::context_t context(1);
+zmq::socket_t socket(context, zmq::socket_type::dealer);
+zmq::message_t identity;
+zmq::message_t request;
+std::string* received_message_ptr;
+bool running = true;
+int current_window = 0;
+
+
+SDL_Window* window = SDL_CreateWindow("P-510 CLIENT APP",
+        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        800, 600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 
 void zmq_client_func(zmq::socket_t& socket_, zmq::context_t& context, std::string*& response_ptr)
 {
@@ -128,4 +140,150 @@ void zmq_server_func(zmq::message_t& request_, zmq::message_t& identity_, zmq::s
             }//
         }
     
+}
+
+int sdl_init()
+{
+    if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) 
+    {
+        printf("SDL_Init Error: %s\n", SDL_GetError());
+        return -1;
+    }
+}
+
+void sdl_event_check()
+{
+    SDL_Event event;
+        while (SDL_PollEvent(&event)) 
+        {
+            ImGui_ImplSDL2_ProcessEvent(&event);
+            if (event.type == SDL_QUIT)
+                running = false;
+        }
+}
+
+void window_name_switch()
+{
+    client_exit_check = 1;
+    client_socket_active = 1;
+    if (zmq_client_funcThread.joinable()) { zmq_client_funcThread.join(); }
+
+    server_exit_check = 1;
+    server_socket_active = 0;
+    if (zmq_server_funcThread.joinable()) { zmq_server_funcThread.join(); }
+
+    float display_size_x = ImGui::GetIO().DisplaySize.x;
+    float display_size_y = ImGui::GetIO().DisplaySize.y;
+
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowSize(ImVec2(display_size_x, display_size_y * 0.40f));
+
+    ImGui::Begin("text window", nullptr, ImGuiWindowFlags_NoTitleBar |
+                                       ImGuiWindowFlags_NoMove |
+                                       ImGuiWindowFlags_NoResize |
+                                       ImGuiWindowFlags_NoCollapse);
+
+    ImVec2 window_size = ImGui::GetWindowSize();
+    float window_width = window_size.x;
+    float window_height = window_size.y;
+    ImGui::SetWindowFontScale(2.5f);
+    ImGui::SetCursorPos(ImVec2(window_width * 0.25f + 20, window_height * 0.5f));
+    ImGui::Text("Choose an Application");
+    
+    ImGui::End();
+
+    ImGui::SetNextWindowPos(ImVec2(0, display_size_y * 0.40f));
+    ImGui::SetNextWindowSize(ImVec2(display_size_x, display_size_y * 0.75f));
+
+    ImGui::Begin("switch", nullptr, ImGuiWindowFlags_NoTitleBar |
+                                   ImGuiWindowFlags_NoMove |
+                                   ImGuiWindowFlags_NoCollapse);
+
+
+    ImGui::SetCursorPos(ImVec2(window_width * 0.5f + 5, 0));
+
+    if (ImGui::Button("Server", ImVec2(window_width * 0.25f, 175)))
+    {
+        try
+        {
+            server_exit_check = 1;
+            server_socket_active = 0;
+            if (zmq_server_funcThread.joinable()) { zmq_server_funcThread.join(); }
+
+            client_exit_check = 1;
+            client_socket_active = 1;
+            if (zmq_client_funcThread.joinable()) { zmq_client_funcThread.join(); }
+
+            socket.close();
+            socket = zmq::socket_t(context, zmq::socket_type::router);
+            socket.bind("tcp://*:5555");
+
+            server_exit_check = 0;
+            server_socket_active = 1;
+            zmq_server_funcThread = std::thread(zmq_server_func,
+                std::ref(request), std::ref(identity), std::ref(socket),
+                std::ref(response_ptr), std::ref(context), std::ref(received_message_ptr));
+            current_window = server;
+        }
+        catch (zmq::error_t err)
+        {
+            std::cerr << err.what() << std::endl;
+        }
+    }
+
+    ImGui::SetCursorPos(ImVec2(window_width * 0.25f, 0));
+    if (ImGui::Button("Client", ImVec2(window_width * 0.25f - 5, 175)))
+    {
+        current_window = enter_adress;
+    }
+
+    ImGui::End();
+}
+
+void window_name_adress()
+{
+    float display_size_x = ImGui::GetIO().DisplaySize.x;
+    float display_size_y = ImGui::GetIO().DisplaySize.y;
+    float halfWidth = display_size_x * 0.5f;
+    float halfHeight = display_size_y * 0.5f;
+    char adress_array[256] = "";
+    try
+            {
+                server_exit_check = 1;
+                server_socket_active = 0;
+                if(zmq_server_funcThread.joinable()){zmq_server_funcThread.join();}
+
+                client_exit_check = 1;
+                client_socket_active = 0;
+                if(zmq_client_funcThread.joinable()){zmq_client_funcThread.join();}
+                socket.close();
+            }
+            catch(zmq::error_t err){std::cerr << err.what() << std::endl;}
+            
+            ImGui::SetNextWindowPos(ImVec2(display_size_x * 0.25f, display_size_y * 0.25f));
+            ImGui::SetNextWindowSize(ImVec2(halfWidth, halfHeight));
+            ImGui::Begin("ADRESS", nullptr, ImGuiWindowFlags_NoTitleBar |
+                ImGuiWindowFlags_NoMove |
+                ImGuiWindowFlags_NoResize |
+                ImGuiWindowFlags_NoCollapse);
+            if(ImGui::Button("<")){current_window = switch;}
+            if(ImGui::InputText("enter the adress", adress_array, IM_ARRAYSIZE(adress_array), ImGuiInputTextFlags_EnterReturnsTrue))
+            {
+                std::string adress_input(adress_array);
+                    
+                socket = zmq::socket_t(context, zmq::socket_type::dealer);
+                try
+                {
+                    socket.connect(adress_input);
+                    zmq_client_funcThread = std::thread(zmq_client_func, std::ref(socket), std::ref(context), std::ref(response_ptr));
+                    client_exit_check = 0;
+                    client_socket_active = 1;
+                    current_window = client;
+                }
+                catch(zmq::error_t err)
+                {
+                    std::cerr << err.what() << std::endl;
+                }  
+            }
+            ImGui::End();
 }

@@ -287,3 +287,99 @@ void window_name_adress()
             }
             ImGui::End();
 }
+
+void window_name_client()
+{
+    float display_size_x = ImGui::GetIO().DisplaySize.x;
+    float display_size_y = ImGui::GetIO().DisplaySize.y;
+    float halfWidth = display_size_x * 0.5f;
+    float bottomHeight = display_size_y * 0.8f;
+    char user_input[256] = "";
+    
+    ImGui::SetNextWindowPos(ImVec2(0, bottomHeight));
+            ImGui::SetNextWindowSize(ImVec2(display_size_x, bottomHeight));
+            ImGui::Begin("...",nullptr, ImGuiWindowFlags_NoTitleBar |
+                ImGuiWindowFlags_NoMove |
+                ImGuiWindowFlags_NoResize |
+                ImGuiWindowFlags_NoCollapse);
+                if(ImGui::Button("<")){current_window = enter_adress;}
+                if(ImGui::InputText("Mesaj", user_input, IM_ARRAYSIZE(user_input), ImGuiInputTextFlags_EnterReturnsTrue) or ImGui::Button("SEND"))    
+                {
+                    //std::cout << user_input << std::endl;
+                    std::lock_guard<std::mutex> lock(globalMutex);
+                    std::string user_input_str(user_input); 
+                    *response_ptr = user_input_str;
+                    ImGui::SetKeyboardFocusHere(-1);
+                    
+                }
+                    
+            ImGui::End();
+            
+            ImGui::SetNextWindowPos(ImVec2(0, 0));
+            ImGui::SetNextWindowSize(ImVec2(display_size_x, bottomHeight));
+            
+
+            ImGui::Begin("MESSAGES", nullptr, ImGuiWindowFlags_NoTitleBar);
+        
+                for (int i = 0; i < message_log.size(); ++i)
+                {
+                    ImGui::Text("%s", message_log[i].c_str());
+                    ImGui::SetScrollHereY(1.0f);
+                }
+
+            ImGui::End();
+}
+
+void window_name_server(SDL_GLContext& gl_context)
+{
+    float display_size_x = ImGui::GetIO().DisplaySize.x;
+    float display_size_y = ImGui::GetIO().DisplaySize.y;
+    float halfWidth = display_size_x * 0.5f;
+    float bottomHeight = display_size_y * 0.8f;
+    char user_input[256] = "";
+    static std::string user_input_stc;
+    ImGui::SetNextWindowPos(ImVec2(0, bottomHeight));
+            ImGui::SetNextWindowSize(ImVec2(display_size_x, bottomHeight));
+            ImGui::Begin("...",nullptr, ImGuiWindowFlags_NoTitleBar |
+                ImGuiWindowFlags_NoMove |
+                ImGuiWindowFlags_NoResize |
+                ImGuiWindowFlags_NoCollapse);
+        
+                if(ImGui::Button("<")){current_window = switch;}
+                if(ImGui::InputText("Mesaj", user_input, IM_ARRAYSIZE(user_input), ImGuiInputTextFlags_EnterReturnsTrue) or ImGui::Button("SEND"))
+                {
+                    //std::cout << user_input << std::endl;
+                    std::lock_guard<std::mutex> lock(globalMutex);
+                    std::string user_input_str(user_input);
+                    if(user_input_str == "exit")
+                    {
+                        client_exit_check = 1;
+                        ImGui_ImplOpenGL2_Shutdown();
+                        ImGui_ImplSDL2_Shutdown();
+                        ImGui::DestroyContext();
+                        SDL_GL_DeleteContext(gl_context);
+                        SDL_DestroyWindow(window);
+                        SDL_Quit();
+                        running = 0;
+                    }
+                    user_input_stc = user_input_str;
+                    response_ptr = &user_input_stc;
+                    ImGui::SetKeyboardFocusHere(-1);
+                }
+
+            ImGui::End();
+            
+            ImGui::SetNextWindowPos(ImVec2(0, 0));
+            ImGui::SetNextWindowSize(ImVec2(display_size_x, bottomHeight));
+            
+            ImGui::Begin("MESSAGES", nullptr, ImGuiWindowFlags_NoTitleBar);
+                
+                for (int i = 0; i < message_log.size(); ++i)
+                {
+                    ImGui::Text("%s", message_log[i].c_str());
+                    
+                }
+                
+                ImGui::SetScrollHereY(1.0f);
+            ImGui::End();
+}

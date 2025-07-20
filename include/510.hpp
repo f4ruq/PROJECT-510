@@ -53,4 +53,8 @@ void window_name_switch();
 
 void window_name_adress();
 
+void window_name_client();
+
+void window_name_server(SDL_GLContext& gl_context);
+
 #endif

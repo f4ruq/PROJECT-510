@@ -7,7 +7,7 @@ int main()
 
     SDL_GLContext gl_context = SDL_GL_CreateContext(window);
     SDL_GL_MakeCurrent(window, gl_context);
-    SDL_GL_SetSwapInterval(1); // Enable vsync
+    SDL_GL_SetSwapInterval(1);
 
     // imgui context
     IMGUI_CHECKVERSION();
@@ -28,7 +28,6 @@ int main()
     style.PopupRounding = 8.0f;  
     style.ChildRounding = 10.0f;  
     style.GrabRounding = 4.0f;   
-    //io.FontDefault = default_font;
     
     // backend init
     ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
@@ -42,101 +41,11 @@ int main()
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
 
-        char user_input[256] = "";
-    
-        static bool goster = false;
-        static std::string user_input_stc;
-        ImVec2 displaySize = io.DisplaySize;
-        float bottomHeight = displaySize.y * 0.8f;
-        float halfHeight = displaySize.y * 0.5f;
-        float fullHeight = displaySize.y;
-        float fullWidth = displaySize.x; 
-        float halfWidth = displaySize.x * 0.5f;        
-        
         if(current_window == switch){window_name_switch();}
         else if(current_window == enter_adress){window_name_adress();}
-        else if(current_window == client)
-        {
-            ImGui::SetNextWindowPos(ImVec2(0, bottomHeight));
-            ImGui::SetNextWindowSize(ImVec2(fullWidth, bottomHeight));
-            ImGui::Begin("...",nullptr, ImGuiWindowFlags_NoTitleBar |
-                ImGuiWindowFlags_NoMove |
-                ImGuiWindowFlags_NoResize |
-                ImGuiWindowFlags_NoCollapse);
-                if(ImGui::Button("<")){current_window = enter_adress;}
-                if(ImGui::InputText("Mesaj", user_input, IM_ARRAYSIZE(user_input), ImGuiInputTextFlags_EnterReturnsTrue) or ImGui::Button("SEND"))    
-                {
-                    //std::cout << user_input << std::endl;
-                    std::lock_guard<std::mutex> lock(globalMutex);
-                    std::string user_input_str(user_input); 
-                    *response_ptr = user_input_str;
-                    ImGui::SetKeyboardFocusHere(-1);
-                    
-                }
-                    
-            ImGui::End();
-            
-            ImGui::SetNextWindowPos(ImVec2(0, 0));
-            ImGui::SetNextWindowSize(ImVec2(fullWidth, bottomHeight));
-            
-
-            ImGui::Begin("MESSAGES", nullptr, ImGuiWindowFlags_NoTitleBar);
+        else if(current_window == client){window_name_client();}
+        else if(current_window == server){window_name_server(gl_context);}
         
-                for (int i = 0; i < message_log.size(); ++i)
-                {
-                    ImGui::Text("%s", message_log[i].c_str());
-                    ImGui::SetScrollHereY(1.0f);
-                }
-
-            ImGui::End();
-        }
-        else if(current_window == server)
-        {
-            ImGui::SetNextWindowPos(ImVec2(0, bottomHeight));
-            ImGui::SetNextWindowSize(ImVec2(fullWidth, bottomHeight));
-            ImGui::Begin("...",nullptr, ImGuiWindowFlags_NoTitleBar |
-                ImGuiWindowFlags_NoMove |
-                ImGuiWindowFlags_NoResize |
-                ImGuiWindowFlags_NoCollapse);
-        
-                if(ImGui::Button("<")){current_window = switch;}
-                if(ImGui::InputText("Mesaj", user_input, IM_ARRAYSIZE(user_input), ImGuiInputTextFlags_EnterReturnsTrue) or ImGui::Button("SEND"))
-                {
-                    //std::cout << user_input << std::endl;
-                    std::lock_guard<std::mutex> lock(globalMutex);
-                    std::string user_input_str(user_input);
-                    if(user_input_str == "exit")
-                    {
-                        client_exit_check = 1;
-                        ImGui_ImplOpenGL2_Shutdown();
-                        ImGui_ImplSDL2_Shutdown();
-                        ImGui::DestroyContext();
-                        SDL_GL_DeleteContext(gl_context);
-                        SDL_DestroyWindow(window);
-                        SDL_Quit();
-                        running = 0;
-                    }
-                    user_input_stc = user_input_str;
-                    response_ptr = &user_input_stc;
-                    ImGui::SetKeyboardFocusHere(-1);
-                }
-
-            ImGui::End();
-            
-            ImGui::SetNextWindowPos(ImVec2(0, 0));
-            ImGui::SetNextWindowSize(ImVec2(fullWidth, bottomHeight));
-            
-            ImGui::Begin("MESSAGES", nullptr, ImGuiWindowFlags_NoTitleBar);
-                
-                for (int i = 0; i < message_log.size(); ++i)
-                {
-                    ImGui::Text("%s", message_log[i].c_str());
-                    
-                }
-                
-                ImGui::SetScrollHereY(1.0f);
-            ImGui::End();
-        }
         // rendering
         ImGui::Render();
         glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
@@ -147,7 +56,6 @@ int main()
     }
     
     //cleanup
-    
     server_socket_active = 0;
     client_socket_active = 0;
     client_exit_check = 1;
@@ -155,7 +63,6 @@ int main()
     socket.close();
     context.shutdown();
     context.close();
-    //socket.close();
     ImGui_ImplOpenGL2_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();

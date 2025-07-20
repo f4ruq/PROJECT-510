@@ -13,6 +13,10 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl2.h"
 #include <vector>
+#define switch 0
+#define client 1
+#define enter_adress 2
+#define server 3
 
 const std::string sentinel_code = "__::R7g!zPq$w9__";
 extern std::mutex globalMutex;
@@ -26,11 +30,27 @@ extern std::string response;
 extern std::string* response_ptr;
 extern std::thread zmq_client_funcThread;
 extern std::thread zmq_server_funcThread;
+extern zmq::context_t context;
+extern zmq::socket_t socket;
+extern zmq::message_t identity;
+extern zmq::message_t request;
+extern std::string* received_message_ptr;
+extern bool running;
+extern int current_window;
+extern SDL_Window* window;
+
 
 void zmq_client_func(zmq::socket_t& socket_, zmq::context_t& context, std::string*& response_ptr);
 
 void zmq_server_func(zmq::message_t& request_, zmq::message_t& identity_, zmq::socket_t& socket_, std::string*& response_ptr, 
     zmq::context_t& context, std::string*& received_message_ptr);
 
+int sdl_init();
+
+void sdl_event_check();
+
+void window_name_switch();
+
+void window_name_adress();
 
 #endif

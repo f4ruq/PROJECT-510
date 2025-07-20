@@ -1,30 +1,9 @@
 #include "510.hpp"
-#define switch 0
-#define client 1
-#define enter_adress 2
-#define server 3
 
 int main()
 {
-    zmq::context_t context(1);
-    zmq::socket_t socket(context, zmq::socket_type::dealer);
     socket.setsockopt(ZMQ_LINGER, 0);
-    zmq::message_t identity;
-    zmq::message_t request;
-    std::string* received_message_ptr;
-    bool running = true;
-    int current_window = 0;
-    
-        // sdl init
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
-        printf("SDL_Init Error: %s\n", SDL_GetError());
-        return -1;
-    }
-
-    // sdl window with opengl context
-    SDL_Window* window = SDL_CreateWindow("P-510 CLIENT APP",
-        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        800, 600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+    sdl_init();
 
     SDL_GLContext gl_context = SDL_GL_CreateContext(window);
     SDL_GL_MakeCurrent(window, gl_context);
@@ -33,40 +12,38 @@ int main()
     // imgui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext(); 
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGuiIO& io = ImGui::GetIO();
+    ImGuiStyle& style = ImGui::GetStyle();
+    ImFontConfig cfg;
+    cfg.SizePixels = 100.0f;
+
+    ImFont* default_font = io.Fonts->AddFontFromFileTTF("assets/Inter_28pt-Regular.ttf", 18.0f);
+    ImFont* bigg_font = io.Fonts->AddFontFromFileTTF("assets/Roboto_Condensed-Regular.ttf", 100.0f);
+    ImFont* big_font = io.Fonts->AddFontFromFileTTF("assets/BitcountGridSingle_Cursive-Regular.ttf", 1.0f, &cfg);
 
     ImGui::StyleColorsDark();
-    ImGuiStyle& style = ImGui::GetStyle();
     
     style.WindowBorderSize = 0.0f;
     style.FrameRounding = 6.0f;   
     style.PopupRounding = 8.0f;  
     style.ChildRounding = 10.0f;  
     style.GrabRounding = 4.0f;   
-    ImFont* default_font = io.Fonts->AddFontFromFileTTF("assets/Inter_28pt-Regular.ttf", 18.0f);
-    //ImFont* big_font = io.Fonts->AddFontFromFileTTF("assets/Roboto_Condensed-Regular.ttf", 100.0f);
-    io.FontDefault = default_font;
+    //io.FontDefault = default_font;
+    
     // backend init
     ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
     ImGui_ImplOpenGL2_Init();
 
     while (running) 
     {
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            ImGui_ImplSDL2_ProcessEvent(&event);
-            if (event.type == SDL_QUIT)
-                running = false;
-        }
-
+        sdl_event_check();
         // start imgui frame
         ImGui_ImplOpenGL2_NewFrame();
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
 
-        
         char user_input[256] = "";
-        char adress_array[256] = "";
+    
         static bool goster = false;
         static std::string user_input_stc;
         ImVec2 displaySize = io.DisplaySize;
@@ -76,116 +53,8 @@ int main()
         float fullWidth = displaySize.x; 
         float halfWidth = displaySize.x * 0.5f;        
         
-        if(current_window == switch)
-        {
-            client_exit_check = 1;
-            client_socket_active = 1;
-            if(zmq_client_funcThread.joinable()){zmq_client_funcThread.join();}
-            
-            server_exit_check = 1;
-            server_socket_active = 0;
-            if(zmq_server_funcThread.joinable()){zmq_server_funcThread.join();}
-            
-                ImGui::SetNextWindowPos(ImVec2(0, 0));
-                ImGui::SetNextWindowSize(ImVec2(displaySize.x , displaySize.y * 0.40f));
-                
-                ImGui::Begin("text window", nullptr, ImGuiWindowFlags_NoTitleBar |
-                ImGuiWindowFlags_NoMove |
-                ImGuiWindowFlags_NoResize |
-                ImGuiWindowFlags_NoCollapse);
-                ImVec2 window_size = ImGui::GetWindowSize();
-                float window_height = window_size.y;
-                float window_width = window_size.x;
-                
-                ImGui::SetWindowFontScale(2.5f);
-                ImGui::SetCursorPos(ImVec2(window_width * 0.25f +20, window_height * 0.5f));
-                ImGui::Text("Choose an Application");
-                ImGui::End();
-            
-            
-            ImGui::SetNextWindowPos(ImVec2(0, displaySize.y * 0.40f));
-            ImGui::SetNextWindowSize(ImVec2(displaySize.x, displaySize.y * 0.75f));
-            
-            ImGui::Begin("switch", nullptr, ImGuiWindowFlags_NoTitleBar |
-                ImGuiWindowFlags_NoMove |
-                //ImGuiWindowFlags_NoResize |
-                ImGuiWindowFlags_NoCollapse);
-                
-                ImGui::SetCursorPos(ImVec2(window_width * 0.5f + 5 , 0));
-                
-                if(ImGui::Button("Server", ImVec2(window_width * 0.25f, 175)))
-                {
-                    try
-                    {
-                        server_exit_check = 1;
-                        server_socket_active = 0;
-                        if(zmq_server_funcThread.joinable()){zmq_server_funcThread.join();}
-                        client_exit_check = 1;
-                        client_socket_active = 1;
-                        if(zmq_client_funcThread.joinable()){zmq_client_funcThread.join();}
-                        
-                        
-                        socket.close();
-                        socket = zmq::socket_t(context, zmq::socket_type::router);
-                        socket.bind("tcp://*:5555");
-                        server_exit_check = 0;
-                        server_socket_active = 1;
-                        zmq_server_funcThread = std::thread(zmq_server_func, std::ref(request), std::ref(identity), std::ref(socket), 
-                            std::ref(response_ptr), std::ref(context), std::ref(received_message_ptr));
-                        current_window = server;
-                    }
-                    catch(zmq::error_t err)
-                    {
-                        std::cerr << err.what() << std::endl;
-                    }
-                }
-
-                ImGui::SetCursorPos(ImVec2(window_width * 0.25f,0));
-                if(ImGui::Button("Client", ImVec2(window_width * 0.25f - 5, 175))){current_window = enter_adress;}
-            ImGui::End();
-        }
-        else if(current_window == enter_adress)
-        {
-            try
-            {
-                server_exit_check = 1;
-                server_socket_active = 0;
-                if(zmq_server_funcThread.joinable()){zmq_server_funcThread.join();}
-
-                client_exit_check = 1;
-                client_socket_active = 0;
-                if(zmq_client_funcThread.joinable()){zmq_client_funcThread.join();}
-                socket.close();
-            }
-            catch(zmq::error_t err){std::cerr << err.what() << std::endl;}
-            
-            ImGui::SetNextWindowPos(ImVec2(displaySize.x * 0.25f, displaySize.y * 0.25f));
-            ImGui::SetNextWindowSize(ImVec2(halfWidth, halfHeight));
-            ImGui::Begin("ADRESS", nullptr, ImGuiWindowFlags_NoTitleBar |
-                ImGuiWindowFlags_NoMove |
-                ImGuiWindowFlags_NoResize |
-                ImGuiWindowFlags_NoCollapse);
-            if(ImGui::Button("GO BACK")){current_window = switch;}
-            if(ImGui::InputText("enter the adress", adress_array, IM_ARRAYSIZE(adress_array), ImGuiInputTextFlags_EnterReturnsTrue))
-            {
-                std::string adress_input(adress_array);
-                    
-                socket = zmq::socket_t(context, zmq::socket_type::dealer);
-                try
-                {
-                    socket.connect(adress_input);
-                    zmq_client_funcThread = std::thread(zmq_client_func, std::ref(socket), std::ref(context), std::ref(response_ptr));
-                    client_exit_check = 0;
-                    client_socket_active = 1;
-                    current_window = client;
-                }
-                catch(zmq::error_t err)
-                {
-                    std::cerr << err.what() << std::endl;
-                }  
-            }
-            ImGui::End();
-        }
+        if(current_window == switch){window_name_switch();}
+        else if(current_window == enter_adress){window_name_adress();}
         else if(current_window == client)
         {
             ImGui::SetNextWindowPos(ImVec2(0, bottomHeight));
@@ -194,7 +63,7 @@ int main()
                 ImGuiWindowFlags_NoMove |
                 ImGuiWindowFlags_NoResize |
                 ImGuiWindowFlags_NoCollapse);
-                if(ImGui::Button("GO BACK")){current_window = enter_adress;}
+                if(ImGui::Button("<")){current_window = enter_adress;}
                 if(ImGui::InputText("Mesaj", user_input, IM_ARRAYSIZE(user_input), ImGuiInputTextFlags_EnterReturnsTrue) or ImGui::Button("SEND"))    
                 {
                     //std::cout << user_input << std::endl;
@@ -230,7 +99,7 @@ int main()
                 ImGuiWindowFlags_NoResize |
                 ImGuiWindowFlags_NoCollapse);
         
-                if(ImGui::Button("GO BACK")){current_window = switch;}
+                if(ImGui::Button("<")){current_window = switch;}
                 if(ImGui::InputText("Mesaj", user_input, IM_ARRAYSIZE(user_input), ImGuiInputTextFlags_EnterReturnsTrue) or ImGui::Button("SEND"))
                 {
                     //std::cout << user_input << std::endl;

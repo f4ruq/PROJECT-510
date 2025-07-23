@@ -13,11 +13,16 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl2.h"
 #include <vector>
+#include "stb_image.h"
 #define switch 0
 #define client 1
 #define enter_adress 2
 #define server 3
 
+
+extern int my_image_width;
+extern int my_image_height;
+extern GLuint my_image_texture;
 const std::string sentinel_code = "__::R7g!zPq$w9__";
 extern std::mutex globalMutex;
 extern std::atomic<bool> server_exit_check;
@@ -56,5 +61,7 @@ void window_name_adress();
 void window_name_client();
 
 void window_name_server(SDL_GLContext& gl_context);
+
+void set_style();
 
 #endif

@@ -1,3 +1,14 @@
+/*
+clang++ final.cpp 510.cpp \
+imgui/imgui*.cpp \
+imgui/backends/imgui_impl_sdl2.cpp imgui/backends/imgui_impl_opengl2.cpp \
+-I/opt/homebrew/include -L/opt/homebrew/lib -lzmq -Iimgui -Iimgui/backends \
+-I/opt/homebrew/include -I/opt/homebrew/include/SDL2 \
+-L/opt/homebrew/lib \
+-lSDL2 -framework OpenGL \
+-std=c++17 -o final
+*/
+
 #include "510.hpp"
 
 int main()
@@ -13,22 +24,16 @@ int main()
     IMGUI_CHECKVERSION();
     ImGui::CreateContext(); 
     ImGuiIO& io = ImGui::GetIO();
-    ImGuiStyle& style = ImGui::GetStyle();
+    
     ImFontConfig cfg;
     cfg.SizePixels = 100.0f;
 
+    //ImFont* icons = io.Fonts->AddFontFromFileTTF("assets/FontAwesome6Free-Regular-400.otf", 20.0f, &icons_config, icons_ranges);
     ImFont* default_font = io.Fonts->AddFontFromFileTTF("assets/Inter_28pt-Regular.ttf", 18.0f);
     ImFont* bigg_font = io.Fonts->AddFontFromFileTTF("assets/Roboto_Condensed-Regular.ttf", 100.0f);
     ImFont* big_font = io.Fonts->AddFontFromFileTTF("assets/BitcountGridSingle_Cursive-Regular.ttf", 1.0f, &cfg);
 
-    ImGui::StyleColorsDark();
-    
-    style.WindowBorderSize = 0.0f;
-    style.FrameRounding = 6.0f;   
-    style.PopupRounding = 8.0f;  
-    style.ChildRounding = 10.0f;  
-    style.GrabRounding = 4.0f;   
-    
+    set_style();
     // backend init
     ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
     ImGui_ImplOpenGL2_Init();
@@ -36,6 +41,7 @@ int main()
     while (running) 
     {
         sdl_event_check();
+        
         // start imgui frame
         ImGui_ImplOpenGL2_NewFrame();
         ImGui_ImplSDL2_NewFrame();

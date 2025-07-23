@@ -33,7 +33,7 @@ To run the client and server across different machines or networks:
 ## What's New
 
 - Graphical User Interface (GUI) added using Dear ImGui with SDL2 and OpenGL2  
-- Message history is displayed in real-time using scrollable windows  
+- Message history is displayed in windows  
 - Input/output is fully GUI-driven, terminal interaction not required anymore
 - Background threads handle all socket communication independently  
 - OpenGL2 backend ensures compatibility on macOS and legacy systems  

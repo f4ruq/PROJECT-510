@@ -1,15 +1,26 @@
-/*
-clang++ final.cpp 510.cpp \
-imgui/imgui*.cpp \
-imgui/backends/imgui_impl_sdl2.cpp imgui/backends/imgui_impl_opengl2.cpp \
--I/opt/homebrew/include -L/opt/homebrew/lib -lzmq -Iimgui -Iimgui/backends \
--I/opt/homebrew/include -I/opt/homebrew/include/SDL2 \
--L/opt/homebrew/lib \
--lSDL2 -framework OpenGL \
--std=c++17 -o final
-*/
-
 #include "510.hpp"
+
+std::mutex globalMutex;
+std::atomic<bool> server_exit_check{0};
+std::atomic<bool> client_exit_check{0};
+std::atomic<bool> server_socket_active{0};
+std::atomic<bool> client_socket_active{0};
+std::string client_id_str;
+std::vector<std::string> message_log;
+std::string response = sentinel_code;
+std::string* response_ptr = &response;
+std::thread zmq_client_funcThread;
+std::thread zmq_server_funcThread;
+zmq::context_t context(1);
+zmq::socket_t socket(context, zmq::socket_type::dealer);
+zmq::message_t identity;
+zmq::message_t request;
+std::string* received_message_ptr;
+bool running = true;
+int current_window = 0;
+int my_image_width = 0;
+int my_image_height = 0;
+GLuint my_image_texture = 0;
 
 int main()
 {

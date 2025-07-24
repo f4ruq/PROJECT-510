@@ -24,7 +24,7 @@ I'm planning to add these features in the future:
 To run the client and server across different machines or networks:
 
 - You must enter the appropriate IP address in client mode.
-- You don't need to do anything for the server side. The system is configured to run over localhost by default.
+- You don't need to do anything for the server side.
 - Ensure firewalls or network configurations allow the chosen port to be accessible.
 - Configure port forwarding or use a VPN/tunneling solution depending on your environment.
 

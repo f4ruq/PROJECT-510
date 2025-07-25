@@ -34,7 +34,7 @@ void window_name_switch()
     icons_config.PixelSnapH = true;
     icons_config.OversampleH = icons_config.OversampleV = 1;    
     ImGuiIO& io = ImGui::GetIO();
-    ImFont* icons = io.Fonts->AddFontFromFileTTF("assets/Font Awesome 7 Free-Solid-900.otf", 20.0f, &icons_config, icons_ranges);
+    ImFont* icons = io.Fonts->AddFontFromFileTTF("/Users/xubustein/Desktop/workspaces/xubusteins_masterpiece/assets/Font-Awesome-7-Free-Solid-900.otf", 20.0f, &icons_config, icons_ranges);
     
     if (zmq_client_funcThread.joinable()) { zmq_client_funcThread.join(); }
 
@@ -125,7 +125,7 @@ void window_name_adress()
     icons_config.PixelSnapH = true;
     icons_config.OversampleH = icons_config.OversampleV = 1;    
     ImGuiIO& io = ImGui::GetIO();
-    ImFont* icons = io.Fonts->AddFontFromFileTTF("assets/Font Awesome 7 Free-Solid-900.otf", 20.0f, &icons_config, icons_ranges);
+    ImFont* icons = io.Fonts->AddFontFromFileTTF("/Users/xubustein/Desktop/workspaces/xubusteins_masterpiece/assets/Font-Awesome-7-Free-Solid-900.otf", 20.0f, &icons_config, icons_ranges);
     float display_size_x = ImGui::GetIO().DisplaySize.x;
     float display_size_y = ImGui::GetIO().DisplaySize.y;
     float halfWidth = display_size_x * 0.5f;
@@ -215,7 +215,7 @@ void window_name_client()
     icons_config.PixelSnapH = true;
     icons_config.OversampleH = icons_config.OversampleV = 1;    
     ImGuiIO& io = ImGui::GetIO();
-    ImFont* icons = io.Fonts->AddFontFromFileTTF("assets/Font Awesome 7 Free-Solid-900.otf", 20.0f, &icons_config, icons_ranges);
+    ImFont* icons = io.Fonts->AddFontFromFileTTF("/Users/xubustein/Desktop/workspaces/xubusteins_masterpiece/assets/Font-Awesome-7-Free-Solid-900.otf", 20.0f, &icons_config, icons_ranges);
     float display_size_x = ImGui::GetIO().DisplaySize.x;
     float display_size_y = ImGui::GetIO().DisplaySize.y;
     float halfWidth = display_size_x * 0.5f;
@@ -292,7 +292,7 @@ void window_name_server(SDL_GLContext& gl_context)
     icons_config.PixelSnapH = true;
     icons_config.OversampleH = icons_config.OversampleV = 1;    
     ImGuiIO& io = ImGui::GetIO();
-    ImFont* icons = io.Fonts->AddFontFromFileTTF("assets/Font Awesome 7 Free-Solid-900.otf", 20.0f, &icons_config, icons_ranges);
+    ImFont* icons = io.Fonts->AddFontFromFileTTF("/Users/xubustein/Desktop/workspaces/xubusteins_masterpiece/assets/Font-Awesome-7-Free-Solid-900.otf", 20.0f, &icons_config, icons_ranges);
     
     ImGui::SetNextWindowPos(ImVec2(0, bottomHeight));
             ImGui::SetNextWindowSize(ImVec2(display_size_x, bottomHeight));
@@ -317,8 +317,6 @@ void window_name_server(SDL_GLContext& gl_context)
                 
                 if(send)
                 {
-                    //ImGui::SetKeyboardFocusHere(-1);
-                    //std::cout << user_input << std::endl;
                     std::lock_guard<std::mutex> lock(globalMutex);
                     std::string user_input_str(user_input);
                     if(user_input_str == "exit")
@@ -353,9 +351,7 @@ void window_name_server(SDL_GLContext& gl_context)
                 for (int i = 0; i < message_log.size(); ++i)
                 {
                     ImGui::Text("%s", message_log[i].c_str());
-                    
                 }
-                
                 ImGui::SetScrollHereY(1.0f);
             ImGui::End();
 }

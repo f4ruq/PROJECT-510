@@ -39,11 +39,6 @@ int main()
     ImFontConfig cfg;
     cfg.SizePixels = 100.0f;
 
-    //ImFont* icons = io.Fonts->AddFontFromFileTTF("assets/FontAwesome6Free-Regular-400.otf", 20.0f, &icons_config, icons_ranges);
-    ImFont* default_font = io.Fonts->AddFontFromFileTTF("assets/Inter_28pt-Regular.ttf", 18.0f);
-    ImFont* bigg_font = io.Fonts->AddFontFromFileTTF("assets/Roboto_Condensed-Regular.ttf", 100.0f);
-    ImFont* big_font = io.Fonts->AddFontFromFileTTF("assets/BitcountGridSingle_Cursive-Regular.ttf", 1.0f, &cfg);
-
     set_style();
     // backend init
     ImGui_ImplSDL2_InitForOpenGL(window, gl_context);

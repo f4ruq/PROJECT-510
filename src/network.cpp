@@ -10,11 +10,6 @@ void zmq_client_func(zmq::socket_t& socket_, zmq::context_t& context, std::strin
             zmq::message_t request(exit_message.size());
             memcpy(request.data(), exit_message.data(), exit_message.size());
             socket_.send(request, zmq::send_flags::none);
-                //socket_.close();
-                
-                /*context.shutdown();
-                context.close();
-                */
             break;
         }
 
@@ -64,12 +59,7 @@ void zmq_server_func(zmq::message_t& request_, zmq::message_t& identity_, zmq::s
             memcpy(reply.data(), exit_message.data(), exit_message.size());
             socket_.send(id_msg, zmq::send_flags::sndmore);
             socket_.send(reply, zmq::send_flags::none);
-            //socket_.close();
-            /*
-            context.shutdown();
-            context.close();
-            */
-           break;
+            break;
         }
         
         // poll the socket for new incoming data with a 100ms timeout

@@ -13,7 +13,6 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl2.h"
 #include <vector>
-#include "stb_image.h"
 #define switch 0
 #define client 1
 #define enter_adress 2

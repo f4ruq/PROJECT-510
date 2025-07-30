@@ -1,9 +1,12 @@
 This project is a messaging system built using C++ and ZeroMQ.  
 The main purpose is to improve my skills in multithreading and socket programming.
 
-![P-510 Messaging App Screenshot1](assets/apps.png) ![P-510 Messaging App Screenshot1](assets/screenshot2.png)
-![P-510 Messaging App Screenshot1](assets/screenshot3.png)
-![P-510 Messaging App Screenshot1](assets/screenshot4.png)
+![P-510 Messaging App Screenshot1](assets/screenshots/register.png) ![P-510 Messaging App Screenshot1](assets/screenshot2.png)
+![P-510 Messaging App Screenshot1](assets/screenshots/login.png)
+![P-510 Messaging App Screenshot1](assets/screenshots/switch.png)
+![P-510 Messaging App Screenshot1](assets/screenshots/adress.png)
+![P-510 Messaging App Screenshot1](assets/screenshots/messages.png)
+
 
 ---
 

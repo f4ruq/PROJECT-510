@@ -29,6 +29,8 @@ file(GLOB SRC_FILES
 )
 
 add_executable(client_app
+    src/ui.cpp
+    src/user_ops.cpp
     ${SRC_FILES}
     ${IMGUI_SRC}
 )

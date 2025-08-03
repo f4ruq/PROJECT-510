@@ -306,9 +306,9 @@ void window_name_server(SDL_GLContext& gl_context, ImFont*& icons, ImFont*& main
     ImGui::SetNextWindowPos(ImVec2(0, bottomHeight));
     ImGui::SetNextWindowSize(ImVec2(display_size_x, bottomHeight));
     ImGui::Begin("...",nullptr, ImGuiWindowFlags_NoTitleBar |
-        ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoCollapse);
+                                ImGuiWindowFlags_NoMove |
+                                ImGuiWindowFlags_NoResize |
+                                ImGuiWindowFlags_NoCollapse);
         ImGui::SetWindowFontScale(1.5f);
         ImGui::SetNextItemWidth(display_size_x - 65);
         ImGui::PushFont(main_font);

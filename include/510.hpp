@@ -22,34 +22,26 @@
 #define server 3
 #define register 4
 #define login 5
+#define testwindow 6
 
-class users
-{
-    protected:
-    std::string user_name;
-    std::string password;
-
-    public:
-    users(std::string user_name_, std::string password_);
-    
-    void set_user_name(std::string user_name);
-    void set_password(std::string password);
-    std::string get_user_name();
-    std::string get_password();
-};
 
 extern int my_image_width;
 extern int my_image_height;
 extern GLuint my_image_texture;
 const std::string sentinel_code = "__::R7g!zPq$w9__";
+extern ImFont* icons;
+extern ImFont* main_font;
 extern std::mutex globalMutex;
 extern std::atomic<bool> server_exit_check;
 extern std::atomic<bool> client_exit_check;
 extern std::atomic<bool> server_socket_active;
 extern std::atomic<bool> client_socket_active;
+extern std::atomic<bool> login_successful;
+extern std::atomic<bool> running;
+extern std::atomic<bool> scroll;
+extern std::atomic<int> current_user_index;
 extern std::string client_id_str;
-extern std::vector<std::string> message_log;
-extern std::vector<users*> user_data;
+extern std::vector<std::string>message_log;
 extern std::string response;
 extern std::string* response_ptr;
 extern std::thread zmq_client_funcThread;
@@ -59,7 +51,6 @@ extern zmq::socket_t socket;
 extern zmq::message_t identity;
 extern zmq::message_t request;
 extern std::string* received_message_ptr;
-extern bool running;
 extern int current_window;
 extern SDL_Window* window;
 
@@ -72,22 +63,22 @@ int sdl_init();
 
 void sdl_event_check();
 
-void window_name_switch();
+void window_name_switch(ImFont*& icons, ImFont*& main_font);
 
-void window_name_adress();
+void window_name_adress(ImFont*& icons, ImFont*& main_font);
 
-void window_name_client();
+void window_name_client(ImFont*& icons, ImFont*& main_font);
 
-void window_name_server(SDL_GLContext& gl_context);
+void window_name_server(SDL_GLContext& gl_context, ImFont*& icons, ImFont*& main_font);
 
-void window_name_register();
+void window_name_register(ImFont*& icons, ImFont*& main_font);
 
-void window_name_login();
+void window_name_login(ImFont*& icons, ImFont*& main_font);
 
-ImFont* get_icon_font(ImGuiIO& io);
-
-ImFont* get_main_font(ImGuiIO& io);
+void test_window(SDL_GLContext& gl_context, ImFont*& icons, ImFont*& main_font);
 
 void set_style();
+
+void main_ui_func(SDL_GLContext& gl_context);
 
 #endif

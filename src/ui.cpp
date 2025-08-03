@@ -1,9 +1,14 @@
 #include "510.hpp"
+#include "user_ops.hpp"
+
+ImFont* icons = nullptr;
+ImFont* main_font = nullptr;
 
 SDL_Window* window = SDL_CreateWindow("P-510 CLIENT APP",
-        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                     SDL_WINDOWPOS_CENTERED, 
+                     SDL_WINDOWPOS_CENTERED,
         800, 600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
-    
+
 int sdl_init()
 {
     if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) 
@@ -24,29 +29,12 @@ void sdl_event_check()
     }
 }
 
-ImFont* get_icon_font(ImGuiIO& io)
-{
-    static const ImWchar icons_ranges[] = { 0xf000, 0xf8ff, 0 };
-    ImFontConfig icons_config;
-    icons_config.MergeMode = false;
-    icons_config.PixelSnapH = true;
-    icons_config.OversampleH = icons_config.OversampleV = 1; 
-    ImFont* icons = io.Fonts->AddFontFromFileTTF("/Users/xubustein/Desktop/workspaces/xubusteins_masterpiece/assets/Font-Awesome-7-Free-Solid-900.otf", 20.0f, &icons_config, icons_ranges);
-    return icons;
-}
-
-ImFont* get_main_font(ImGuiIO& io)
-{
-    ImFont* main_font = io.Fonts->AddFontFromFileTTF("/Users/xubustein/Desktop/workspaces/xubusteins_masterpiece/assets/Roboto_Condensed-Regular.ttf", 20.0f);
-    return main_font;
-}
-
-void window_name_switch()
+void window_name_switch(ImFont*& icons, ImFont*& main_font)
 {
     client_exit_check = 1;
     client_socket_active = 1;
     ImGuiIO& io = ImGui::GetIO();
-    //ImFont* icons = get_icon_font(io);
+    //ImFont* icons = icons;
     if (zmq_client_funcThread.joinable()) { zmq_client_funcThread.join(); }
 
     server_exit_check = 1;
@@ -60,9 +48,9 @@ void window_name_switch()
     ImGui::SetNextWindowSize(ImVec2(display_size_x, display_size_y * 0.40f));
 
     ImGui::Begin("text window", nullptr, ImGuiWindowFlags_NoTitleBar |
-                                       ImGuiWindowFlags_NoMove |
-                                       ImGuiWindowFlags_NoResize |
-                                       ImGuiWindowFlags_NoCollapse);
+                                         ImGuiWindowFlags_NoMove |
+                                         ImGuiWindowFlags_NoResize |
+                                         ImGuiWindowFlags_NoCollapse);
 
         ImVec2 window_size = ImGui::GetWindowSize();
         float window_width = window_size.x;
@@ -70,7 +58,7 @@ void window_name_switch()
         ImGui::SetWindowFontScale(3.5f);
         ImGui::SetCursorPos(ImVec2(window_width * 0.25f + 20, window_height * 0.7f));
         //ImGui::Text("Choose an Application");
-        ImGui::PushFont(get_main_font(io));
+        ImGui::PushFont(main_font);
         ImGui::Text("Connect");
         ImGui::SetCursorPos(ImVec2(window_width * 0.50f + 60, window_height * 0.7));
         ImGui::Text("Host");    
@@ -82,11 +70,11 @@ void window_name_switch()
     ImGui::SetNextWindowSize(ImVec2(display_size_x, display_size_y * 0.75f));
 
     ImGui::Begin("switch", nullptr, ImGuiWindowFlags_NoTitleBar |
-                                   ImGuiWindowFlags_NoMove |
-                                   ImGuiWindowFlags_NoCollapse);
+                                    ImGuiWindowFlags_NoMove |
+                                    ImGuiWindowFlags_NoCollapse);
         ImGui::SetWindowFontScale(3.0f);
         ImGui::SetCursorPos(ImVec2(window_width * 0.5f + 5, 0));
-        ImGui::PushFont(get_icon_font(io));
+        ImGui::PushFont(icons);
         if (ImGui::Button(u8"\uf015", ImVec2(window_width * 0.25f, 175)))//server button
         {
             try
@@ -122,7 +110,7 @@ void window_name_switch()
         }
         ImGui::PopFont();
         ImGui::SetCursorPos(ImVec2(window_width * 0.25f, 0));
-        ImGui::PushFont(get_icon_font(io));
+        ImGui::PushFont(icons);
         if (ImGui::Button(u8"\uf075", ImVec2(window_width * 0.25f - 5, 175)))//client button
         {
             current_window = enter_adress;
@@ -131,7 +119,7 @@ void window_name_switch()
     ImGui::End();
 }
 
-void window_name_adress()
+void window_name_adress(ImFont*& icons, ImFont*& main_font)
 {
     ImGuiIO& io = ImGui::GetIO();
     float display_size_x = ImGui::GetIO().DisplaySize.x;
@@ -159,7 +147,7 @@ void window_name_adress()
                                        ImGuiWindowFlags_NoResize |
                                        ImGuiWindowFlags_NoCollapse);
     ImGui::SetWindowFontScale(1.35f);    
-    ImGui::PushFont(get_icon_font(io));    
+    ImGui::PushFont(icons);    
         if(ImGui::Button(u8"\uf060")){current_window = switch;}
         ImGui::PopFont();  
     ImGui::End(); 
@@ -177,7 +165,7 @@ void window_name_adress()
         float window_height = window_size.y;
         ImGui::SetWindowFontScale(3.5f);
         ImGui::SetCursorPos(ImVec2(window_width * 0.25f - 10, window_height * 0.5f));
-        ImGui::PushFont(get_main_font(io));
+        ImGui::PushFont(main_font);
         ImGui::Text("Enter Adress");   
         ImGui::PopFont();
     ImGui::End();
@@ -190,7 +178,7 @@ void window_name_adress()
                                     ImGuiWindowFlags_NoCollapse);
         ImGui::SetWindowFontScale(1.75f);  
         ImGui::SetNextItemWidth(window_width-10);
-        ImGui::PushFont(get_main_font(io));
+        ImGui::PushFont(main_font);
         if(ImGui::InputText("##", adress_array, IM_ARRAYSIZE(adress_array), ImGuiInputTextFlags_EnterReturnsTrue))
         {
             std::string adress_input(adress_array);
@@ -211,7 +199,7 @@ void window_name_adress()
         }
         ImGui::PopFont();
 
-        ImGui::PushFont(get_main_font(io));
+        ImGui::PushFont(main_font);
         if(ImGui::Button("Connect", ImVec2(window_width-10, 40.0f)))
         {
             
@@ -220,7 +208,7 @@ void window_name_adress()
     ImGui::End();
 }
 
-void window_name_client()
+void window_name_client(ImFont*& icons, ImFont*& main_font)
 {
     ImGuiIO& io = ImGui::GetIO();
     float display_size_x = ImGui::GetIO().DisplaySize.x;
@@ -230,17 +218,28 @@ void window_name_client()
     bool send = 0;
     static char user_input[256] = "";
     
+    ImGui::SetNextWindowPos(ImVec2(0,0));
+    ImGui::SetNextWindowSize(ImVec2(45, 46));
+
+    ImGui::Begin("back button", nullptr, ImGuiWindowFlags_NoTitleBar |
+                                       ImGuiWindowFlags_NoMove |
+                                       ImGuiWindowFlags_NoResize |
+                                       ImGuiWindowFlags_NoCollapse);
+    ImGui::SetWindowFontScale(1.35f);    
+    ImGui::PushFont(icons);    
+        if(ImGui::Button(u8"\uf060")){current_window = enter_adress;}
+        ImGui::PopFont();  
+    ImGui::End(); 
     ImGui::SetNextWindowPos(ImVec2(0, bottomHeight));
     ImGui::SetNextWindowSize(ImVec2(display_size_x, bottomHeight));
-    
+
     ImGui::Begin("...",nullptr, ImGuiWindowFlags_NoTitleBar |
         ImGuiWindowFlags_NoMove |
         ImGuiWindowFlags_NoResize |
         ImGuiWindowFlags_NoCollapse);
-        //if(ImGui::Button("<")){current_window = enter_adress;}
         ImGui::SetWindowFontScale(1.5f);
         ImGui::SetNextItemWidth(display_size_x - 65);
-        ImGui::PushFont(get_main_font(io));
+        ImGui::PushFont(main_font);
         if(ImGui::InputText("##", user_input, IM_ARRAYSIZE(user_input), ImGuiInputTextFlags_EnterReturnsTrue))
         {
             send = 1;
@@ -248,7 +247,7 @@ void window_name_client()
         }
         ImGui::PopFont();
         ImGui::SameLine();
-        ImGui::PushFont(get_icon_font(io));
+        ImGui::PushFont(icons);
         if(ImGui::Button(u8"\uf1d8"))
         {
             send = 1;
@@ -268,29 +267,33 @@ void window_name_client()
         
     ImGui::End();
         
-    ImGui::SetNextWindowPos(ImVec2(0, 0));
-    ImGui::SetNextWindowSize(ImVec2(display_size_x, bottomHeight));
-        
-        
+    ImGui::SetNextWindowPos(ImVec2(0, 46));
+    ImGui::SetNextWindowSize(ImVec2(display_size_x, bottomHeight - 46));
+            
     ImGui::Begin("MESSAGES", nullptr, ImGuiWindowFlags_NoTitleBar);
-        ImGui::SetWindowFontScale(1.35f);
-        ImGui::PushFont(get_icon_font(io));
-        if(ImGui::Button(u8"\uf060")){current_window = enter_adress;}
-        ImGui::PopFont();
+        ImGui::SetWindowFontScale(1.65f);
+
         for (int i = 0; i < message_log.size(); ++i)
         {
-            ImGui::PushFont(get_main_font(io));
+            ImGui::PushFont(icons);
+            ImGui::Text(u8"\uf2bd");
+            ImGui::PopFont();
+            ImGui::SameLine();
+            ImGui::PushFont(main_font);
             ImGui::Text("%s", message_log[i].c_str());
-            ImGui::SetScrollHereY(1.0f);
+            if(scroll)
+            {
+                ImGui::SetScrollY(ImGui::GetScrollMaxY() + 30);
+            }            
+            scroll = 0;
             ImGui::PopFont();
         }
     
     ImGui::End();
         
-            
-    }
+}
     
-void window_name_server(SDL_GLContext& gl_context)
+void window_name_server(SDL_GLContext& gl_context, ImFont*& icons, ImFont*& main_font)
 {
     float display_size_x = ImGui::GetIO().DisplaySize.x;
     float display_size_y = ImGui::GetIO().DisplaySize.y;
@@ -301,75 +304,91 @@ void window_name_server(SDL_GLContext& gl_context)
     ImGuiIO& io = ImGui::GetIO();
     
     ImGui::SetNextWindowPos(ImVec2(0, bottomHeight));
-            ImGui::SetNextWindowSize(ImVec2(display_size_x, bottomHeight));
-            ImGui::Begin("...",nullptr, ImGuiWindowFlags_NoTitleBar |
-                ImGuiWindowFlags_NoMove |
-                ImGuiWindowFlags_NoResize |
-                ImGuiWindowFlags_NoCollapse);
-                ImGui::SetWindowFontScale(1.5f);
-                ImGui::SetNextItemWidth(display_size_x - 65);
-                ImGui::PushFont(get_main_font(io));
-                if(ImGui::InputText("##", user_input, IM_ARRAYSIZE(user_input), ImGuiInputTextFlags_EnterReturnsTrue))
-                {
-                    send = 1;
-                    ImGui::SetKeyboardFocusHere(-1);
-                }
-                ImGui::PopFont();
-                ImGui::SameLine();
-                ImGui::PushFont(get_icon_font(io));
-                if(ImGui::Button(u8"\uf1d8"))
-                {
-                    send = 1;
-                }
-                ImGui::PopFont();
+    ImGui::SetNextWindowSize(ImVec2(display_size_x, bottomHeight));
+    ImGui::Begin("...",nullptr, ImGuiWindowFlags_NoTitleBar |
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoCollapse);
+        ImGui::SetWindowFontScale(1.5f);
+        ImGui::SetNextItemWidth(display_size_x - 65);
+        ImGui::PushFont(main_font);
+        if(ImGui::InputText("##", user_input, IM_ARRAYSIZE(user_input), ImGuiInputTextFlags_EnterReturnsTrue))
+        {
+            send = 1;
+            ImGui::SetKeyboardFocusHere(-1);
+        }
+        ImGui::PopFont();
+        ImGui::SameLine();
+        ImGui::PushFont(icons);
+        if(ImGui::Button(u8"\uf1d8"))
+        {
+            send = 1;
+        }
+        ImGui::PopFont();
+        
+        if(send)
+        {
+            //ImGui::SetKeyboardFocusHere(-1);
+            //std::cout << user_input << std::endl;
+            std::lock_guard<std::mutex> lock(globalMutex);
+            std::string user_input_str(user_input);
+            if(user_input_str == "exit")
+            {
+                client_exit_check = 1;
+                ImGui_ImplOpenGL2_Shutdown();
+                ImGui_ImplSDL2_Shutdown();
+                ImGui::DestroyContext();
+                SDL_GL_DeleteContext(gl_context);
+                SDL_DestroyWindow(window);
+                SDL_Quit();
+                running = 0;
+            }
+            static std::string tmp_storage;
+            tmp_storage = user_input_str;
+            response_ptr = &tmp_storage;
+            user_input[0] = '\0';    
+            send = 0;
+        }
+        
+    ImGui::End();
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowSize(ImVec2(display_size_x, bottomHeight));
+    
+    
+    ImGui::Begin("back button", nullptr, ImGuiWindowFlags_NoTitleBar |
+                                         ImGuiWindowFlags_NoMove |
+                                         ImGuiWindowFlags_NoResize |
+                                         ImGuiWindowFlags_NoCollapse);
+        ImGui::SetWindowFontScale(1.35f);    
+        ImGui::PushFont(icons);    
+        if(ImGui::Button(u8"\uf060")){current_window = enter_adress;}
+        ImGui::PopFont();  
+        ImGui::End(); 
+        
+        ImGui::Begin("MESSAGES", nullptr, ImGuiWindowFlags_NoTitleBar);
+        ImGui::SetWindowFontScale(1.65f);
+        
+        for (int i = 0; i < message_log.size(); ++i)
+        {
+            ImGui::PushFont(icons);
+            ImGui::Text(u8"\uf2bd");
+            ImGui::PopFont();
+            ImGui::SameLine();
+            ImGui::PushFont(main_font);
+            ImGui::Text("%s", message_log[i].c_str());
+            if(scroll)
+            {
+                ImGui::SetScrollY(ImGui::GetScrollMaxY() + 30);
                 
-                if(send)
-                {
-                    //ImGui::SetKeyboardFocusHere(-1);
-                    //std::cout << user_input << std::endl;
-                    std::lock_guard<std::mutex> lock(globalMutex);
-                    std::string user_input_str(user_input);
-                    if(user_input_str == "exit")
-                    {
-                        client_exit_check = 1;
-                        ImGui_ImplOpenGL2_Shutdown();
-                        ImGui_ImplSDL2_Shutdown();
-                        ImGui::DestroyContext();
-                        SDL_GL_DeleteContext(gl_context);
-                        SDL_DestroyWindow(window);
-                        SDL_Quit();
-                        running = 0;
-                    }
-                    static std::string tmp_storage;
-                    tmp_storage = user_input_str;
-                    response_ptr = &tmp_storage;
-                    user_input[0] = '\0';    
-                    send = 0;
-                }
-
-            ImGui::End();
+            }            
+            scroll = 0;
             
-            ImGui::SetNextWindowPos(ImVec2(0, 0));
-            ImGui::SetNextWindowSize(ImVec2(display_size_x, bottomHeight));
-            
-            ImGui::Begin("MESSAGES", nullptr, ImGuiWindowFlags_NoTitleBar);
-                ImGui::SetWindowFontScale(1.35f);
-                ImGui::PushFont(get_icon_font(io));
-                if(ImGui::Button(u8"\uf060")){current_window = switch;}
-                ImGui::PopFont();
-
-                for (int i = 0; i < message_log.size(); ++i)
-                {
-                    ImGui::PushFont(get_main_font(io));
-                    ImGui::Text("%s", message_log[i].c_str());
-                    ImGui::PopFont();
-                }
-                
-                ImGui::SetScrollHereY(1.0f);
-            ImGui::End();
+            ImGui::PopFont();
+        }
+    ImGui::End();
 }
 
-void window_name_register()
+void window_name_register(ImFont*& icons, ImFont*& main_font)
 {
     ImGuiIO& io = ImGui::GetIO();
     float display_size_x = ImGui::GetIO().DisplaySize.x;
@@ -378,7 +397,8 @@ void window_name_register()
     float halfHeight = display_size_y * 0.5f;
     static char user_name[256] = "";
     static char password[256] = "";
-    
+    bool username_entered = 0;
+    bool password_entered = 0;
     try
     {
         server_exit_check = 1;
@@ -394,11 +414,11 @@ void window_name_register()
     ImGui::SetNextWindowPos(ImVec2(0,0));
     ImGui::SetNextWindowSize(ImVec2(45, 46));
     ImGui::Begin("back button", nullptr, ImGuiWindowFlags_NoTitleBar |
-                                       ImGuiWindowFlags_NoMove |
-                                       ImGuiWindowFlags_NoResize |
-                                       ImGuiWindowFlags_NoCollapse);
+                                         ImGuiWindowFlags_NoMove |
+                                         ImGuiWindowFlags_NoResize |
+                                         ImGuiWindowFlags_NoCollapse);
         ImGui::SetWindowFontScale(1.35f);
-        ImGui::PushFont(get_icon_font(io));    
+        ImGui::PushFont(icons);    
         if(ImGui::Button(u8"\uf060")){current_window = switch;}
         ImGui::PopFont();  
     ImGui::End(); 
@@ -416,7 +436,7 @@ void window_name_register()
         float window_height = window_size.y;
         ImGui::SetWindowFontScale(3.5f);
         ImGui::SetCursorPos(ImVec2(window_width * 0.25f + 30.0f ,window_height * 0.5f));
-        ImGui::PushFont(get_main_font(io));
+        ImGui::PushFont(main_font);
         ImGui::Text("Register");   
         ImGui::PopFont();
     ImGui::End();
@@ -424,43 +444,49 @@ void window_name_register()
     ImGui::SetNextWindowPos(ImVec2(display_size_x * 0.25f, display_size_y * 0.5f));
     ImGui::SetNextWindowSize(ImVec2(halfWidth, halfHeight * 0.5f));
     ImGui::Begin("username and password", nullptr, ImGuiWindowFlags_NoTitleBar |
-                                    ImGuiWindowFlags_NoMove |
-                                    ImGuiWindowFlags_NoResize |
-                                    ImGuiWindowFlags_NoCollapse);
+                                                   ImGuiWindowFlags_NoMove |
+                                                   ImGuiWindowFlags_NoResize |
+                                                   ImGuiWindowFlags_NoCollapse);
         ImGui::SetWindowFontScale(1.75f);  
-        ImGui::PushFont(get_main_font(io));
+        ImGui::PushFont(main_font);
         ImGui::SetNextItemWidth(window_width-10);
         ImGui::PushID("##");
         if(ImGui::InputText("##", user_name, IM_ARRAYSIZE(user_name), ImGuiInputTextFlags_EnterReturnsTrue))
         {
-            std::string username_str(user_name);
+            username_entered = 1;
         }
         ImGui::PopID();
         ImGui::SetNextItemWidth(window_width-10);
-        if(ImGui::InputText("##", password, IM_ARRAYSIZE(password)))
+        if(ImGui::InputText("##", password, IM_ARRAYSIZE(password), ImGuiInputTextFlags_Password))
         {
-            std::string password_str(password);
+            password_entered = 1;
         }
         ImGui::PopFont();
-        ImGui::PushFont(get_main_font(io));
+        ImGui::PushFont(main_font);
+        
         if(ImGui::Button("Register",ImVec2(window_width-10, 40.0f)))
         {
-
+            std::string username_str(user_name);
+            std::string password_str(password);
+            create_new_user(username_str, password_str);
+            current_window = login;
         }
         ImGui::PopFont();
     ImGui::End();
 }
 
-void window_name_login()
+void window_name_login(ImFont*& icons, ImFont*& main_font)
 {
     ImGuiIO& io = ImGui::GetIO();
+    
     float display_size_x = ImGui::GetIO().DisplaySize.x;
     float display_size_y = ImGui::GetIO().DisplaySize.y;
     float halfWidth = display_size_x * 0.5f;
     float halfHeight = display_size_y * 0.5f;
     static char user_name[256] = "";
     static char password[256] = "";
-    
+    bool username_entered = 0;
+    bool password_entered = 0;
     try
     {
         server_exit_check = 1;
@@ -476,11 +502,11 @@ void window_name_login()
     ImGui::SetNextWindowPos(ImVec2(0,0));
     ImGui::SetNextWindowSize(ImVec2(45, 46));
     ImGui::Begin("back button", nullptr, ImGuiWindowFlags_NoTitleBar |
-                                       ImGuiWindowFlags_NoMove |
-                                       ImGuiWindowFlags_NoResize |
-                                       ImGuiWindowFlags_NoCollapse);
+                                         ImGuiWindowFlags_NoMove |
+                                         ImGuiWindowFlags_NoResize |
+                                         ImGuiWindowFlags_NoCollapse);
         ImGui::SetWindowFontScale(1.35f);
-        ImGui::PushFont(get_icon_font(io));    
+        ImGui::PushFont(icons);    
         if(ImGui::Button(u8"\uf060")){current_window = switch;}
         ImGui::PopFont();  
     ImGui::End(); 
@@ -497,8 +523,8 @@ void window_name_login()
         float window_width = window_size.x;
         float window_height = window_size.y;
         ImGui::SetWindowFontScale(3.5f);
-        ImGui::SetCursorPos(ImVec2(window_width * 0.25f + 50.0f ,window_height * 0.5f));
-        ImGui::PushFont(get_main_font(io));
+        ImGui::SetCursorPos(ImVec2(window_width * 0.25f + 30.0f ,window_height * 0.5f));
+        ImGui::PushFont(main_font);
         ImGui::Text("Login");   
         ImGui::PopFont();
     ImGui::End();
@@ -506,33 +532,49 @@ void window_name_login()
     ImGui::SetNextWindowPos(ImVec2(display_size_x * 0.25f, display_size_y * 0.5f));
     ImGui::SetNextWindowSize(ImVec2(halfWidth, halfHeight * 0.5f));
     ImGui::Begin("username and password", nullptr, ImGuiWindowFlags_NoTitleBar |
-                                    ImGuiWindowFlags_NoMove |
-                                    ImGuiWindowFlags_NoResize |
-                                    ImGuiWindowFlags_NoCollapse);
+                                                   ImGuiWindowFlags_NoMove |
+                                                   ImGuiWindowFlags_NoResize |
+                                                   ImGuiWindowFlags_NoCollapse);
         ImGui::SetWindowFontScale(1.75f);  
-        ImGui::PushFont(get_main_font(io));
+        ImGui::PushFont(main_font);
         ImGui::SetNextItemWidth(window_width-10);
         ImGui::PushID("##");
         if(ImGui::InputText("##", user_name, IM_ARRAYSIZE(user_name), ImGuiInputTextFlags_EnterReturnsTrue))
         {
-            std::string username_str(user_name);
+            username_entered = 1;
         }
         ImGui::PopID();
         ImGui::SetNextItemWidth(window_width-10);
-        if(ImGui::InputText("##", password, IM_ARRAYSIZE(password)))
+        if(ImGui::InputText("##", password, IM_ARRAYSIZE(password), ImGuiInputTextFlags_Password))
         {
-            std::string password_str(password);
+            password_entered = 1;
         }
         ImGui::PopFont();
-        ImGui::PushFont(get_main_font(io));
-        if(ImGui::Button("Login",ImVec2(window_width-10, 40.0f)))
+        ImGui::PushFont(main_font);
+        
+        if(ImGui::Button("Register",ImVec2(window_width-10, 40.0f)))
         {
-
+            std::string username_str(user_name);
+            std::string password_str(password);
+            login_(username_str, password_str);
+            current_window = switch;
         }
         ImGui::PopFont();
     ImGui::End();
 }
 
+void main_ui_func(SDL_GLContext& gl_context)
+{
+    if(current_window == switch){window_name_switch(icons, main_font);}
+    else if(current_window == enter_adress){window_name_adress(icons, main_font);}
+    else if(current_window == client){window_name_client(icons, main_font);}
+    else if(current_window == server){window_name_server(gl_context, icons, main_font);}
+    else if(current_window == register){window_name_register(icons, main_font);}
+    else if(current_window == login){window_name_login(icons, main_font);}
+    else if(current_window == testwindow){test_window(gl_context, icons, main_font);}
+
+}
+            
 void set_style()
 {
     ImGuiStyle& style = ImGui::GetStyle();

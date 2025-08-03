@@ -1,10 +1,13 @@
 #include "510.hpp"
-
+#include "user_ops.hpp"
 std::mutex globalMutex;
 std::atomic<bool> server_exit_check{0};
 std::atomic<bool> client_exit_check{0};
 std::atomic<bool> server_socket_active{0};
 std::atomic<bool> client_socket_active{0};
+std::atomic<bool> login_successful{0};
+std::atomic<int> current_user_index{-1};
+std::atomic<bool> scroll{0};
 std::string client_id_str;
 std::vector<std::string> message_log;
 std::string response = sentinel_code;
@@ -16,7 +19,7 @@ zmq::socket_t socket(context, zmq::socket_type::dealer);
 zmq::message_t identity;
 zmq::message_t request;
 std::string* received_message_ptr;
-bool running = true;
+std::atomic<bool> running{1};
 int current_window = 0;
 int my_image_width = 0;
 int my_image_height = 0;
@@ -35,7 +38,9 @@ int main()
     IMGUI_CHECKVERSION();
     ImGui::CreateContext(); 
     ImGuiIO& io = ImGui::GetIO();
-    
+    icons = io.Fonts->AddFontFromFileTTF("/Users/xubustein/Desktop/workspaces/xubusteins_masterpiece/assets/Font-Awesome-7-Free-Solid-900.otf", 13.0f);
+    main_font = io.Fonts->AddFontFromFileTTF("/Users/xubustein/Desktop/workspaces/xubusteins_masterpiece/assets/Roboto_Condensed-Regular.ttf", 20.0f);
+
     ImFontConfig cfg;
     cfg.SizePixels = 100.0f;
 
@@ -52,12 +57,7 @@ int main()
         ImGui_ImplOpenGL2_NewFrame();
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
-
-        if(current_window == switch){window_name_switch();}
-        else if(current_window == enter_adress){window_name_adress();}
-        else if(current_window == client){window_name_client();}
-        else if(current_window == server){window_name_server(gl_context);}
-        
+        main_ui_func(gl_context);
         // rendering
         ImGui::Render();
         glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
@@ -68,6 +68,7 @@ int main()
     }
     
     //cleanup
+    clean_memory();
     server_socket_active = 0;
     client_socket_active = 0;
     client_exit_check = 1;

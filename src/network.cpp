@@ -10,6 +10,11 @@ void zmq_client_func(zmq::socket_t& socket_, zmq::context_t& context, std::strin
             zmq::message_t request(exit_message.size());
             memcpy(request.data(), exit_message.data(), exit_message.size());
             socket_.send(request, zmq::send_flags::none);
+                //socket_.close();
+                
+                /*context.shutdown();
+                context.close();
+                */
             break;
         }
 
@@ -26,8 +31,10 @@ void zmq_client_func(zmq::socket_t& socket_, zmq::context_t& context, std::strin
                 
             if(received != sentinel_code)
             {
+                scroll = 1;
                 std::lock_guard<std::mutex> lock(globalMutex);
-                message_log.push_back("server: " + received);
+               message_log.push_back(received);
+               scroll = 1;
                 std::cout << "message from server: " << received << std::endl;
             }
         }
@@ -41,7 +48,11 @@ void zmq_client_func(zmq::socket_t& socket_, zmq::context_t& context, std::strin
         }//
         zmq::message_t request(response_copy.size());
         memcpy(request.data(), response_copy.data(), response_copy.size());
-        if(response_copy != sentinel_code){message_log.push_back("you: " + response_copy);}
+        if(response_copy != sentinel_code)
+        {
+            message_log.push_back("(You) " + response_copy);
+            scroll = 1;
+        }
         socket_.send(request, zmq::send_flags::none);
     }
 }
@@ -59,7 +70,12 @@ void zmq_server_func(zmq::message_t& request_, zmq::message_t& identity_, zmq::s
             memcpy(reply.data(), exit_message.data(), exit_message.size());
             socket_.send(id_msg, zmq::send_flags::sndmore);
             socket_.send(reply, zmq::send_flags::none);
-            break;
+            //socket_.close();
+            /*
+            context.shutdown();
+            context.close();
+            */
+           break;
         }
         
         // poll the socket for new incoming data with a 100ms timeout
@@ -79,7 +95,8 @@ void zmq_server_func(zmq::message_t& request_, zmq::message_t& identity_, zmq::s
             {
                 std::lock_guard<std::mutex> lock(globalMutex);
                 received_message_ptr = &received_message;
-                message_log.push_back("client: " + received_message);
+                message_log.push_back(received_message);
+                scroll = 1;
                 std::cout << "message from client: " << received_message << std::endl;
             }
         }
@@ -90,7 +107,8 @@ void zmq_server_func(zmq::message_t& request_, zmq::message_t& identity_, zmq::s
             
             if (response_ != sentinel_code && !client_id_str.empty()) 
             {
-                message_log.push_back("you: " + response_);
+                message_log.push_back("(You)" + response_);
+                scroll = 1;
                 zmq::message_t id_msg(client_id_str.begin(), client_id_str.end());
                 zmq::message_t reply(response_.size());
                 memcpy(reply.data(), response_.data(), response_.size());

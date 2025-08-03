@@ -6,7 +6,7 @@ The main purpose is to improve my skills in multithreading and socket programmin
 ![P-510 Messaging App Screenshot1](assets/screenshots/switch.png)
 ![P-510 Messaging App Screenshot1](assets/screenshots/adress.png)
 ![P-510 Messaging App Screenshot1](assets/screenshots/messages.png)
-
+![P-510 Messaging App Screenshot1](assets/screenshots/chat.png)
 
 ---
 
